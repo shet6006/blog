@@ -78,6 +78,14 @@ export async function POST(req: Request) {
       { expiresIn: "1d" }
     )
 
+    // 실제 프로토콜 확인 (프록시 환경 대응)
+    const forwardedProto = req.headers.get("x-forwarded-proto")
+    const isHttps = forwardedProto === "https" || 
+                    (process.env.NODE_ENV === "production" && !forwardedProto)
+    // 환경 변수로 명시적 제어 가능
+    const shouldUseSecure = process.env.COOKIE_SECURE === "true" || 
+                           (process.env.COOKIE_SECURE !== "false" && isHttps)
+
     const response = NextResponse.json(
       { 
         message: "로그인 성공", 
@@ -99,8 +107,9 @@ export async function POST(req: Request) {
       name: "token",
       value: token,
       httpOnly: true, // XSS 공격 방지
-      secure: process.env.NODE_ENV === "production", // HTTPS에서만 전송
-      sameSite: "lax",
+      secure: shouldUseSecure, // 실제 프로토콜 기반 설정
+      sameSite: process.env.COOKIE_SAME_SITE === "none" ? "none" : 
+                process.env.COOKIE_SAME_SITE === "strict" ? "strict" : "lax",
       maxAge: 60 * 60 * 24, // 1 day
       path: "/",
     })
