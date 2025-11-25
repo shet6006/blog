@@ -40,7 +40,7 @@ fi
 # 의존성 설치
 echo ""
 echo "📦 의존성 설치 중..."
-npm install
+npm install --legacy-peer-deps
 
 # 환경 변수 파일 확인
 if [ ! -f ".env" ]; then
