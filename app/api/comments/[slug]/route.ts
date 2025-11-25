@@ -131,6 +131,12 @@ export async function POST(request: Request, context: { params: Promise<{ slug: 
       [postId, nameValidation.sanitized, contentValidation.sanitized, deviceId]
     )
     
+    // 게시글의 댓글 개수 업데이트
+    await pool.execute(
+      `UPDATE posts SET comments_count = (SELECT COUNT(*) FROM comments WHERE post_id = ?) WHERE id = ?`,
+      [postId, postId]
+    )
+    
     return NextResponse.json({ message: "댓글이 등록되었습니다." }, {
       headers: {
         "X-RateLimit-Limit": "10",
@@ -155,11 +161,23 @@ export async function DELETE(request: Request, context: { params: Promise<{ slug
       return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 })
     }
     const postId = postRows[0].id
-    // 해당 게시글의 모든 댓글 삭제 (원래는 개별 삭제가 맞으나, 프론트 구조상 slug 단위로 처리)
+    // 댓글 ID로 삭제 (body에서 commentId 받기)
+    const body = await request.json().catch(() => ({}))
+    const commentId = body.commentId
+    
+    if (commentId) {
+      await pool.execute(`DELETE FROM comments WHERE id = ? AND post_id = ?`, [commentId, postId])
+    } else {
+      // commentId가 없으면 모든 댓글 삭제 (기존 동작 유지)
+      await pool.execute(`DELETE FROM comments WHERE post_id = ?`, [postId])
+    }
+    
+    // 게시글의 댓글 개수 업데이트
     await pool.execute(
-      `DELETE FROM comments WHERE post_id = ?`,
-      [postId]
+      `UPDATE posts SET comments_count = (SELECT COUNT(*) FROM comments WHERE post_id = ?) WHERE id = ?`,
+      [postId, postId]
     )
+    
     return NextResponse.json({ message: "댓글이 삭제되었습니다." })
   } catch (error) {
     return NextResponse.json({ error: "서버 오류" }, { status: 500 })

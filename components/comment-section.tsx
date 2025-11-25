@@ -74,6 +74,8 @@ export function CommentSection({ postSlug }: CommentSectionProps) {
       toast.success("댓글이 등록되었습니다.")
       setNewComment("")
       loadComments()
+      // 페이지 새로고침하여 댓글 개수 업데이트
+      window.location.reload()
     } catch (error) {
       console.error("댓글 등록 중 오류:", error)
       toast.error("댓글 등록 중 오류가 발생했습니다.")
@@ -82,9 +84,15 @@ export function CommentSection({ postSlug }: CommentSectionProps) {
 
   const handleDelete = async (commentId: string) => {
     try {
-      await apiClient.deleteComment(postSlug)
+      await fetch(`/api/comments/${postSlug}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId }),
+      })
       toast.success("댓글이 삭제되었습니다.")
       loadComments()
+      // 페이지 새로고침하여 댓글 개수 업데이트
+      window.location.reload()
     } catch (error) {
       console.error("댓글 삭제 중 오류:", error)
       toast.error("댓글 삭제 중 오류가 발생했습니다.")

@@ -38,9 +38,10 @@ export class PostModel {
       search?: string
       page?: number
       limit?: number
+      sortBy?: string
     } = {},
   ) {
-    const { isPublicOnly = true, category, search, page = 1, limit = 10 } = options
+    const { isPublicOnly = true, category, search, page = 1, limit = 10, sortBy = "created_at" } = options
 
     let query = `
       SELECT p.*, c.name as category_name 
@@ -66,7 +67,9 @@ export class PostModel {
       params.push(searchTerm, searchTerm, searchTerm)
     }
 
-    query += " ORDER BY p.created_at DESC"
+    // 정렬 설정
+    const orderBy = sortBy === "likes_count" ? "p.likes_count DESC" : "p.created_at DESC"
+    query += ` ORDER BY ${orderBy}`
 
     // 페이지네이션
     const offset = (page - 1) * limit

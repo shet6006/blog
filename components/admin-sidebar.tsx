@@ -31,11 +31,6 @@ const menuItems = [
     label: "통계",
     icon: BarChart3,
   },
-  {
-    href: "/admin/settings",
-    label: "설정",
-    icon: Settings,
-  },
 ]
 
 export function AdminSidebar() {

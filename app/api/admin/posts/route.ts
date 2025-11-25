@@ -54,8 +54,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "내용이 너무 깁니다. (최대 100,000자)" }, { status: 400 })
     }
 
-    // category_id 검증
-    if (!Number.isInteger(category_id) || category_id < 1) {
+    // category_id를 숫자로 변환 및 검증
+    const categoryIdNum = Number.parseInt(category_id)
+    if (isNaN(categoryIdNum) || !Number.isInteger(categoryIdNum) || categoryIdNum < 1) {
       return NextResponse.json({ error: "잘못된 카테고리입니다." }, { status: 400 })
     }
 
@@ -88,7 +89,7 @@ export async function POST(req: Request) {
         created_at,
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [title, content, excerpt, category_id, is_public, slug, "admin"]
+      [title, content, excerpt, categoryIdNum, is_public, slug, "admin"]
     ) as any[]
 
     const [newPost] = await pool.execute(
@@ -127,7 +128,11 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const page = Number(searchParams.get("page")) || 1
     const limit = Number(searchParams.get("limit")) || 10
-    const offset = (page - 1) * limit
+    
+    // 페이지네이션 검증
+    const validatedPage = page < 1 ? 1 : page > 1000 ? 1000 : page
+    const validatedLimit = limit < 1 ? 10 : limit > 100 ? 100 : limit
+    const offset = (validatedPage - 1) * validatedLimit
 
     // 게시글 목록 조회
     const [posts] = await pool.execute<RowDataPacket[]>(
@@ -137,7 +142,7 @@ export async function GET(req: Request) {
        WHERE p.author_id = ? 
        ORDER BY p.created_at DESC 
        LIMIT ? OFFSET ?`,
-      ["admin", validatedLimit, offset]
+      ["admin", Number(validatedLimit), Number(offset)]
     )
 
     // 전체 게시글 수 조회
@@ -156,10 +161,18 @@ export async function GET(req: Request) {
         totalPages: Math.ceil(total / validatedLimit),
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Posts API Error:", error)
+    console.error("Error details:", {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    })
     return NextResponse.json(
-      { error: "게시글 목록 조회 중 오류가 발생했습니다." },
+      { 
+        error: "게시글 목록 조회 중 오류가 발생했습니다.",
+        details: process.env.NODE_ENV === "development" ? error?.message : undefined
+      },
       { status: 500 }
     )
   }

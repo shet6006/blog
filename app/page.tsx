@@ -22,9 +22,11 @@ export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({});
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [sortBy, setSortBy] = useState<"latest" | "popular">("latest");
 
   useEffect(() => {
-    apiClient.getPosts({ category, search, page, limit: 10 }).then((res) => setPosts(res as any));
+    const sortParam = sortBy === "popular" ? "likes" : "created_at";
+    apiClient.getPosts({ category, search, page, limit: 10, sortBy: sortParam }).then((res) => setPosts(res as any));
     apiClient.getCategories().then((cats) => {
       setCategories((cats as any[]).map((cat) => ({
         ...cat,
@@ -33,7 +35,7 @@ export default function HomePage() {
     });
     apiClient.getStats().then(setStats);
     apiClient.getAdminProfile().then((res) => setProfile((res as any).profile));
-  }, [category, search, page]);
+  }, [category, search, page, sortBy]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -101,10 +103,18 @@ export default function HomePage() {
                 {search && ` - "${search}" 검색 결과`}
               </h2>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant={sortBy === "latest" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setSortBy("latest")}
+                >
                   최신순
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant={sortBy === "popular" ? "default" : "outline"} 
+                  size="sm"
+                  onClick={() => setSortBy("popular")}
+                >
                   인기순
                 </Button>
               </div>

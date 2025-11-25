@@ -71,6 +71,7 @@ export default function WritePage() {
         },
         body: JSON.stringify({
           ...post,
+          category_id: Number.parseInt(post.category_id) || 0,
           is_public: false, // 임시저장은 항상 비공개
         }),
       })
@@ -98,6 +99,7 @@ export default function WritePage() {
         },
         body: JSON.stringify({
           ...post,
+          category_id: Number.parseInt(post.category_id) || 0,
           is_public: true,
         }),
       })

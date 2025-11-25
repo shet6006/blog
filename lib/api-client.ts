@@ -46,6 +46,7 @@ class ApiClient {
     page?: number
     limit?: number
     includePrivate?: boolean
+    sortBy?: string
   }) {
     const searchParams = new URLSearchParams()
     if (params?.category) searchParams.set("category", params.category)
@@ -53,6 +54,7 @@ class ApiClient {
     if (params?.page) searchParams.set("page", params.page.toString())
     if (params?.limit) searchParams.set("limit", params.limit.toString())
     if (params?.includePrivate) searchParams.set("includePrivate", "true")
+    if (params?.sortBy) searchParams.set("sortBy", params.sortBy)
 
     return this.request(`${this.baseUrl}/posts?${searchParams}`)
   }
