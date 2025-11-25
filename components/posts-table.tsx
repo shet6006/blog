@@ -29,15 +29,21 @@ export function PostsTable() {
 
   const loadPosts = async () => {
     try {
-      const response = await fetch("/api/admin/posts")
+      const response = await fetch("/api/admin/posts", {
+        credentials: "include",
+      })
       if (response.ok) {
         const data = await response.json()
         setPostList((data.posts || []).slice(0, 5)) // 최근 5개만
       } else {
+        // 에러가 발생해도 빈 배열로 설정하여 크래시 방지
+        setPostList([])
         const errorData = await response.json().catch(() => ({}))
         console.error("Failed to load posts:", response.status, errorData)
       }
     } catch (error) {
+      // 네트워크 에러 등 발생 시에도 빈 배열로 설정
+      setPostList([])
       console.error("Failed to load posts:", error)
     } finally {
       setIsLoading(false)

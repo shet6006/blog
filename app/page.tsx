@@ -25,16 +25,31 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState<"latest" | "popular">("latest");
 
   useEffect(() => {
-    const sortParam = sortBy === "popular" ? "likes" : "created_at";
-    apiClient.getPosts({ category, search, page, limit: 10, sortBy: sortParam }).then((res) => setPosts(res as any));
-    apiClient.getCategories().then((cats) => {
-      setCategories((cats as any[]).map((cat) => ({
-        ...cat,
-        postCount: cat.post_count ?? 0,
-      })))
-    });
-    apiClient.getStats().then(setStats);
-    apiClient.getAdminProfile().then((res) => setProfile((res as any).profile));
+    const loadData = async () => {
+      try {
+        const sortParam = sortBy === "popular" ? "likes" : "created_at";
+        const postsData = await apiClient.getPosts({ category, search, page, limit: 10, sortBy: sortParam }).catch(() => ({ posts: [], pagination: null }));
+        setPosts(postsData as any);
+        
+        const categoriesData = await apiClient.getCategories().catch(() => []);
+        setCategories((categoriesData as any[]).map((cat) => ({
+          ...cat,
+          postCount: cat.post_count ?? 0,
+        })));
+        
+        const statsData = await apiClient.getStats().catch(() => ({}));
+        setStats(statsData);
+        
+        const profileData = await apiClient.getAdminProfile().catch(() => null);
+        if (profileData) {
+          setProfile((profileData as any).profile);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
+    
+    loadData();
   }, [category, search, page, sortBy]);
 
   return (

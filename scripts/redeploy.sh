@@ -53,10 +53,39 @@ if [ ! -f ".env" ]; then
     fi
 fi
 
+# 이전 빌드 삭제 (깨끗한 빌드를 위해)
+echo ""
+echo "🧹 이전 빌드 삭제 중..."
+rm -rf .next
+rm -rf node_modules/.cache
+
 # 빌드
 echo ""
 echo "🔨 빌드 중..."
-npm run build
+NODE_ENV=production npm run build
+
+# 빌드 성공 확인
+if [ ! -d ".next" ]; then
+    echo "❌ 빌드 실패: .next 디렉토리가 생성되지 않았습니다."
+    exit 1
+fi
+
+# 빌드된 청크 파일 확인
+echo ""
+echo "📋 빌드된 파일 확인 중..."
+if [ -d ".next/static/chunks/app/admin/write" ]; then
+    echo "✅ /admin/write 청크 파일 확인됨"
+    ls -la .next/static/chunks/app/admin/write/ | head -5
+else
+    echo "⚠️  /admin/write 청크 파일을 찾을 수 없습니다."
+fi
+
+if [ -d ".next/static/chunks/app/admin/dashboard" ]; then
+    echo "✅ /admin/dashboard 청크 파일 확인됨"
+    ls -la .next/static/chunks/app/admin/dashboard/ | head -5
+else
+    echo "⚠️  /admin/dashboard 청크 파일을 찾을 수 없습니다."
+fi
 
 # PM2 재시작
 echo ""

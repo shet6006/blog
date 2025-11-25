@@ -55,16 +55,20 @@ export default function PostsManagementPage() {
 
   const loadPosts = async () => {
     try {
-      const response = await fetch("/api/admin/posts")
+      const response = await fetch("/api/admin/posts", {
+        credentials: "include",
+      })
       if (response.ok) {
         const data = await response.json()
         setPosts(data.posts || [])
       } else {
+        setPosts([]) // 에러 발생 시 빈 배열로 설정
         const errorData = await response.json().catch(() => ({}))
         console.error("Failed to load posts:", response.status, errorData)
         toast.error(errorData.error || "게시글을 불러오는데 실패했습니다.")
       }
     } catch (error) {
+      setPosts([]) // 네트워크 에러 시에도 빈 배열로 설정
       console.error("Failed to load posts:", error)
       toast.error("게시글을 불러오는데 실패했습니다.")
     }
