@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     const token = sign(
       { userId: user.id, name: user.name },
       process.env.JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1h" } // 1시간
     )
 
     // 실제 프로토콜 확인 (프록시 환경 대응)
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
       secure: shouldUseSecure, // 실제 프로토콜 기반 설정
       sameSite: process.env.COOKIE_SAME_SITE === "none" ? "none" : 
                 process.env.COOKIE_SAME_SITE === "strict" ? "strict" : "lax",
-      maxAge: 60 * 60 * 24, // 1 day
+      maxAge: 60 * 60 * 1, // 1 hour (3600초)
       path: "/",
     })
 

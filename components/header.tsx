@@ -93,6 +93,9 @@ export function Header() {
               <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors">
                 소개
               </Link>
+              <Link href="/api-docs" className="text-gray-700 hover:text-blue-600 transition-colors">
+                API 문서
+              </Link>
             </nav>
 
             {/* Desktop Actions */}
@@ -170,6 +173,13 @@ export function Header() {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   소개
+                </Link>
+                <Link
+                  href="/api-docs"
+                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  API 문서
                 </Link>
                 <div className="px-4 py-2">
                   {isLoggedIn ? (
