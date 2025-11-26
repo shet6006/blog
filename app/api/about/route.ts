@@ -23,9 +23,34 @@ export async function GET() {
       }
 
       const about = rows[0]
+      
+      // tech_stack 안전하게 파싱
+      let parsedTechStack: string[] = []
+      if (about.tech_stack) {
+        try {
+          if (typeof about.tech_stack === 'string') {
+            const trimmed = about.tech_stack.trim()
+            if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') {
+              parsedTechStack = []
+            } else {
+              if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+                parsedTechStack = JSON.parse(trimmed)
+              } else {
+                parsedTechStack = [trimmed]
+              }
+            }
+          } else if (Array.isArray(about.tech_stack)) {
+            parsedTechStack = about.tech_stack
+          }
+        } catch (parseError) {
+          console.error("tech_stack 파싱 오류:", parseError, "원본 값:", about.tech_stack)
+          parsedTechStack = []
+        }
+      }
+      
       return NextResponse.json({
         ...about,
-        tech_stack: about.tech_stack ? JSON.parse(about.tech_stack) : [],
+        tech_stack: parsedTechStack,
       })
     } catch (tableError: any) {
       // 테이블이 없는 경우 기본값 반환
@@ -71,38 +96,122 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
     }
 
-    const { title, content, tech_stack } = await req.json()
+    const body = await req.json()
+    const { title, content, tech_stack } = body
 
-    // 기존 데이터 확인
-    const [existing] = await pool.execute<RowDataPacket[]>(
-      "SELECT * FROM about_page ORDER BY id DESC LIMIT 1"
-    )
-
-    if (existing.length > 0) {
-      // 업데이트
-      await pool.execute(
-        "UPDATE about_page SET title = ?, content = ?, tech_stack = ? WHERE id = ?",
-        [title, content, JSON.stringify(tech_stack || []), existing[0].id]
-      )
-    } else {
-      // 생성
-      await pool.execute(
-        "INSERT INTO about_page (title, content, tech_stack) VALUES (?, ?, ?)",
-        [title, content, JSON.stringify(tech_stack || [])]
+    // 입력 검증
+    if (!title || !content) {
+      return NextResponse.json(
+        { error: "제목과 내용은 필수입니다." },
+        { status: 400 }
       )
     }
 
-    const [updated] = await pool.execute<RowDataPacket[]>(
+    // 기존 데이터 확인
+    const [existingRows] = await pool.execute<RowDataPacket[]>(
       "SELECT * FROM about_page ORDER BY id DESC LIMIT 1"
     )
 
+    let aboutId: number
+
+    if (Array.isArray(existingRows) && existingRows.length > 0) {
+      // 업데이트
+      aboutId = existingRows[0].id
+      await pool.execute(
+        "UPDATE about_page SET title = ?, content = ?, tech_stack = ?, updated_at = NOW() WHERE id = ?",
+        [title, content, JSON.stringify(tech_stack || []), aboutId]
+      )
+    } else {
+      // 생성
+      const [result] = await pool.execute(
+        "INSERT INTO about_page (title, content, tech_stack) VALUES (?, ?, ?)",
+        [title, content, JSON.stringify(tech_stack || [])]
+      ) as any[]
+      
+      // insertId 확인 (mysql2의 ResultSetHeader)
+      if (result && result.insertId) {
+        aboutId = result.insertId
+      } else {
+        // insertId가 없으면 다시 조회
+        const [newRows] = await pool.execute<RowDataPacket[]>(
+          "SELECT id FROM about_page ORDER BY id DESC LIMIT 1"
+        )
+        if (Array.isArray(newRows) && newRows.length > 0) {
+          aboutId = newRows[0].id
+        } else {
+          throw new Error("생성된 데이터를 찾을 수 없습니다.")
+        }
+      }
+    }
+
+    // 업데이트된 데이터 조회
+    const [updatedRows] = await pool.execute<RowDataPacket[]>(
+      "SELECT * FROM about_page WHERE id = ?",
+      [aboutId]
+    )
+
+    if (!Array.isArray(updatedRows) || updatedRows.length === 0) {
+      console.error("Updated data not found, id:", aboutId)
+      return NextResponse.json(
+        { error: "업데이트된 데이터를 찾을 수 없습니다." },
+        { status: 500 }
+      )
+    }
+
+    const updated = updatedRows[0]
+
+    // tech_stack 안전하게 파싱
+    let parsedTechStack: string[] = []
+    if (updated.tech_stack) {
+      try {
+        // 이미 문자열인 경우와 JSON 문자열인 경우 모두 처리
+        if (typeof updated.tech_stack === 'string') {
+          const trimmed = updated.tech_stack.trim()
+          if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') {
+            parsedTechStack = []
+          } else {
+            // JSON 형식인지 확인 (배열로 시작하는지)
+            if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
+              parsedTechStack = JSON.parse(trimmed)
+            } else {
+              // 단일 문자열인 경우 배열로 변환
+              parsedTechStack = [trimmed]
+            }
+          }
+        } else if (Array.isArray(updated.tech_stack)) {
+          // 이미 배열인 경우
+          parsedTechStack = updated.tech_stack
+        } else {
+          // 객체인 경우
+          parsedTechStack = []
+        }
+      } catch (parseError) {
+        console.error("tech_stack 파싱 오류:", parseError, "원본 값:", updated.tech_stack)
+        parsedTechStack = []
+      }
+    }
+
     return NextResponse.json({
-      ...updated[0],
-      tech_stack: updated[0].tech_stack ? JSON.parse(updated[0].tech_stack) : [],
+      id: updated.id,
+      title: updated.title,
+      content: updated.content,
+      tech_stack: parsedTechStack,
+      updated_at: updated.updated_at,
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("Update about page error:", error)
-    return NextResponse.json({ error: "소개 페이지 업데이트에 실패했습니다." }, { status: 500 })
+    console.error("Error details:", {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    })
+    return NextResponse.json(
+      { 
+        error: "소개 페이지 업데이트에 실패했습니다.",
+        details: process.env.NODE_ENV === "development" ? error?.message : undefined
+      },
+      { status: 500 }
+    )
   }
 }
 

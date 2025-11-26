@@ -33,21 +33,59 @@ export function Header() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch("/api/auth/check")
+      // 개발 환경에서만 상세 로깅
+      if (process.env.NODE_ENV === "development") {
+        console.log("🔍 [Header] 인증 상태 확인:", {
+          url: "/api/auth/check",
+          cookies: document.cookie,
+        })
+      }
+      
+      const response = await fetch("/api/auth/check", {
+        credentials: "include", // 쿠키 자동 전송
+      })
+      
+      if (process.env.NODE_ENV === "development") {
+        console.log("📡 [Header] 응답:", {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+        })
+      }
+      
       if (response.ok) {
         const data = await response.json()
-        setIsLoggedIn(true)
-        setUser(data.user)
         
-        // 프로필 정보 가져오기
-        const profileResponse = await fetch("/api/admin/profile")
-        if (profileResponse.ok) {
-          const profileData = await profileResponse.json()
-          setProfile(profileData.profile)
+        // authenticated 필드로 로그인 상태 확인
+        if (data.authenticated && data.user) {
+          setIsLoggedIn(true)
+          setUser(data.user)
+          
+          // 프로필 정보 가져오기
+          const profileResponse = await fetch("/api/admin/profile", {
+            credentials: "include",
+          })
+          if (profileResponse.ok) {
+            const profileData = await profileResponse.json()
+            setProfile(profileData.profile)
+          }
+        } else {
+          // 로그인하지 않은 상태 (정상)
+          setIsLoggedIn(false)
+          setUser(null)
         }
+      } else {
+        // 응답이 ok가 아닌 경우 (서버 오류 등)
+        if (process.env.NODE_ENV === "development") {
+          console.warn("⚠️ [Header] 인증 확인 실패:", response.status)
+        }
+        setIsLoggedIn(false)
+        setUser(null)
       }
     } catch (error) {
-      console.error("Auth check failed:", error)
+      console.error("❌ [Header] 인증 확인 중 오류:", error)
+      setIsLoggedIn(false)
+      setUser(null)
     }
   }
 

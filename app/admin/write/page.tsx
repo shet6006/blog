@@ -41,15 +41,29 @@ export default function WritePage() {
 
   const checkAuthAndLoadData = async () => {
     try {
-      const response = await fetch("/api/auth/check")
+      const response = await fetch("/api/auth/check", {
+        credentials: "include",
+      })
+      
       if (!response.ok) {
         router.push("/")
         toast.error("권한이 필요한 페이지입니다.")
         return
       }
 
+      const authData = await response.json()
+      
+      // authenticated 필드로 권한 확인
+      if (!authData.authenticated) {
+        router.push("/")
+        toast.error("권한이 필요한 페이지입니다.")
+        return
+      }
+
       // 카테고리 데이터 로드
-      const categoriesResponse = await fetch("/api/admin/categories")
+      const categoriesResponse = await fetch("/api/admin/categories", {
+        credentials: "include",
+      })
       if (categoriesResponse.ok) {
         const data = await categoriesResponse.json()
         setCategories(data.categories)

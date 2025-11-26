@@ -41,10 +41,13 @@ export default function AboutPage() {
 
   const checkAdmin = async () => {
     try {
-      const response = await fetch("/api/auth/check")
+      const response = await fetch("/api/auth/check", {
+        credentials: "include",
+      })
       if (response.ok) {
         const data = await response.json()
-        setIsAdmin(data.user?.id === "admin")
+        // authenticated 필드로 확인
+        setIsAdmin(data.authenticated && data.user?.id === "admin")
       }
     } catch (error) {
       console.error("Admin check failed:", error)
@@ -75,20 +78,32 @@ export default function AboutPage() {
     try {
       const response = await fetch("/api/about", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+        },
+        credentials: "include", // 쿠키 자동 전송
         body: JSON.stringify(editData),
       })
 
       if (response.ok) {
+        const data = await response.json()
         toast.success("소개 페이지가 업데이트되었습니다.")
         setIsEditing(false)
-        loadAbout()
+        // 응답 데이터로 상태 업데이트
+        setAbout(data)
+        setEditData({
+          title: data.title,
+          content: data.content,
+          tech_stack: data.tech_stack || [],
+        })
       } else {
-        const error = await response.json()
-        toast.error(error.error || "업데이트에 실패했습니다.")
+        const errorData = await response.json().catch(() => ({ error: "알 수 없는 오류" }))
+        console.error("Update failed:", errorData)
+        toast.error(errorData.error || errorData.details || "업데이트에 실패했습니다.")
       }
-    } catch (error) {
-      toast.error("업데이트 중 오류가 발생했습니다.")
+    } catch (error: any) {
+      console.error("Update error:", error)
+      toast.error("업데이트 중 오류가 발생했습니다: " + (error?.message || "알 수 없는 오류"))
     }
   }
 

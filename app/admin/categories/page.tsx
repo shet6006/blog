@@ -31,8 +31,20 @@ export default function CategoriesManagementPage() {
 
   const checkAuthAndLoadCategories = async () => {
     try {
-      const response = await fetch("/api/auth/check")
+      const response = await fetch("/api/auth/check", {
+        credentials: "include",
+      })
+      
       if (!response.ok) {
+        router.push("/")
+        toast.error("권한이 필요한 페이지입니다.")
+        return
+      }
+
+      const authData = await response.json()
+      
+      // authenticated 필드로 권한 확인
+      if (!authData.authenticated) {
         router.push("/")
         toast.error("권한이 필요한 페이지입니다.")
         return

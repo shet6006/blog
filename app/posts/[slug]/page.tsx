@@ -38,6 +38,26 @@ export default function PostPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [stats, setStats] = useState<any>({})
 
+  // 댓글 개수 업데이트를 위한 이벤트 리스너
+  useEffect(() => {
+    const handleCommentUpdate = async () => {
+      // 댓글 개수만 다시 가져오기
+      if (post) {
+        try {
+          const updatedPost = await apiClient.getPostBySlug(post.slug) as Post
+          setPost(updatedPost)
+        } catch (error) {
+          console.error("댓글 개수 업데이트 실패:", error)
+        }
+      }
+    }
+
+    window.addEventListener("commentUpdated", handleCommentUpdate)
+    return () => {
+      window.removeEventListener("commentUpdated", handleCommentUpdate)
+    }
+  }, [post])
+
   useEffect(() => {
     let isMounted = true
     

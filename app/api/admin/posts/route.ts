@@ -135,14 +135,18 @@ export async function GET(req: Request) {
     const offset = (validatedPage - 1) * validatedLimit
 
     // 게시글 목록 조회
+    // LIMIT와 OFFSET은 검증된 정수 값을 사용하여 직접 삽입 (MySQL2 prepared statement 호환성 문제 해결)
+    const limitNum = Number.parseInt(String(validatedLimit), 10)
+    const offsetNum = Number.parseInt(String(offset), 10)
+    
     const [posts] = await pool.execute<RowDataPacket[]>(
       `SELECT p.*, c.name as category_name 
        FROM posts p 
        LEFT JOIN categories c ON p.category_id = c.id 
        WHERE p.author_id = ? 
        ORDER BY p.created_at DESC 
-       LIMIT ? OFFSET ?`,
-      ["admin", Number(validatedLimit), Number(offset)]
+       LIMIT ${limitNum} OFFSET ${offsetNum}`,
+      ["admin"]
     )
 
     // 전체 게시글 수 조회

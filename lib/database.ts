@@ -34,6 +34,12 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
+  // 연결 재사용 설정
+  reconnect: true,
+  // 연결 타임아웃 설정
+  acquireTimeout: 60000,
+  // 연결 유지 시간
+  timeout: 60000,
 })
 
 // 초기화 상태 추적 (싱글톤 패턴)
