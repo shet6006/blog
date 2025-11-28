@@ -46,8 +46,8 @@ export default function AboutPage() {
       })
       if (response.ok) {
         const data = await response.json()
-        // authenticated 필드로 확인
-        setIsAdmin(data.authenticated && data.user?.id === "admin")
+        // authenticated 필드로 확인 (admin_profile에 있는 사용자면 인증됨)
+        setIsAdmin(data.authenticated === true)
       }
     } catch (error) {
       console.error("Admin check failed:", error)
