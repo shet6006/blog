@@ -31,7 +31,14 @@ export async function POST(req: Request) {
     }
 
     const decoded = verify(token, process.env.JWT_SECRET) as { userId: string }
-    if (!decoded || decoded.userId !== "admin") {
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
+    }
+
+    // admin_profile 테이블에 존재하는 사용자인지 확인
+    const { AdminModel } = await import("@/lib/models/admin")
+    const isAdmin = await AdminModel.isAdmin(decoded.userId)
+    if (!isAdmin) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
     }
 
@@ -89,7 +96,7 @@ export async function POST(req: Request) {
         created_at,
         updated_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-      [title, content, excerpt, categoryIdNum, is_public, slug, "admin"]
+      [title, content, excerpt, categoryIdNum, is_public, slug, decoded.userId]
     ) as any[]
 
     const [newPost] = await pool.execute(
@@ -121,7 +128,14 @@ export async function GET(req: Request) {
     }
 
     const decoded = verify(token, process.env.JWT_SECRET) as { userId: string }
-    if (!decoded || decoded.userId !== "admin") {
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
+    }
+
+    // admin_profile 테이블에 존재하는 사용자인지 확인
+    const { AdminModel } = await import("@/lib/models/admin")
+    const isAdmin = await AdminModel.isAdmin(decoded.userId)
+    if (!isAdmin) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
     }
 
@@ -146,13 +160,13 @@ export async function GET(req: Request) {
        WHERE p.author_id = ? 
        ORDER BY p.created_at DESC 
        LIMIT ${limitNum} OFFSET ${offsetNum}`,
-      ["admin"]
+      [decoded.userId]
     )
 
     // 전체 게시글 수 조회
     const [totalResult] = await pool.execute<RowDataPacket[]>(
       "SELECT COUNT(*) as total FROM posts WHERE author_id = ?",
-      ["admin"]
+      [decoded.userId]
     )
     const total = totalResult[0].total
 

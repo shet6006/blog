@@ -83,6 +83,24 @@ export async function POST(request: NextRequest) {
     // 요약 생성
     const excerpt = content.replace(/[#*`]/g, "").replace(/\n/g, " ").substring(0, 150) + "..."
 
+    // 인증 확인 (관리자만 게시글 작성 가능)
+    const { cookies } = await import("next/headers")
+    const { verify } = await import("jsonwebtoken")
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    let authorId = "admin" // 기본값
+    if (token && process.env.JWT_SECRET) {
+      try {
+        const decoded = verify(token, process.env.JWT_SECRET) as { userId: string }
+        if (decoded?.userId) {
+          authorId = decoded.userId
+        }
+      } catch {
+        // 토큰 검증 실패 시 기본값 사용
+      }
+    }
+
     const newPost = await PostModel.create({
       title,
       content,
@@ -91,7 +109,7 @@ export async function POST(request: NextRequest) {
       slug,
       github_commit_url: github_commit_url || null,
       is_public,
-      author_id: "admin",
+      author_id: authorId,
     })
 
     return NextResponse.json(newPost, { status: 201 })

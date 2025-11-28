@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -48,21 +49,28 @@ export default function EditPostPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!post) return
+    
+    if (!post.title?.trim()) {
+      toast.error("제목을 입력해주세요.")
+      return
+    }
+    
     try {
-      // 첫 줄에서 제목/slug 추출
-      const firstLine = post.content.split('\n')[0]
-      const title = firstLine.replace(/^#\s*/, "").trim()
-      const newSlug = title
+      // 제목에서 slug 생성
+      const newSlug = post.title
         .toLowerCase()
         .replace(/[^a-z0-9가-힣]/g, "-")
         .replace(/-+/g, "-")
         .replace(/^-|-$/g, "")
+      
       const res = await fetch(`/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...post,
-          title,
+          title: post.title,
+          content: post.content,
+          category_id: post.category_id,
+          is_public: post.is_public ? 1 : 0, // MySQL용 변환
           slug: newSlug,
         }),
       })
@@ -114,7 +122,17 @@ export default function EditPostPage() {
             <h1 className="text-2xl font-bold mb-6">게시글 수정</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="content">내용 (제목은 #으로 시작)</Label>
+                <Label htmlFor="title">제목</Label>
+                <Input
+                  id="title"
+                  value={post.title || ""}
+                  onChange={e => setPost({ ...post, title: e.target.value })}
+                  placeholder="게시글 제목"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="content">내용</Label>
                 <Textarea
                   id="content"
                   value={post.content}

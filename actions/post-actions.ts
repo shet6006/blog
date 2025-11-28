@@ -18,6 +18,24 @@ export async function createPostAction(formData: FormData) {
     const slug = generateSlug(title)
     const excerpt = generateExcerpt(content)
 
+    // 인증된 사용자의 ID를 사용 (Server Action에서는 쿠키에서 가져옴)
+    const { cookies } = await import("next/headers")
+    const { verify } = await import("jsonwebtoken")
+    const cookieStore = await cookies()
+    const token = cookieStore.get("token")?.value
+    
+    let authorId = "admin" // 기본값
+    if (token && process.env.JWT_SECRET) {
+      try {
+        const decoded = verify(token, process.env.JWT_SECRET) as { userId: string }
+        if (decoded?.userId) {
+          authorId = decoded.userId
+        }
+      } catch {
+        // 토큰 검증 실패 시 기본값 사용
+      }
+    }
+
     const newPost = dataStore.createPost({
       title,
       content,
@@ -26,7 +44,7 @@ export async function createPostAction(formData: FormData) {
       slug,
       githubCommit: githubCommit || null,
       isPublic,
-      authorId: "admin",
+      authorId,
     })
 
     revalidatePath("/")

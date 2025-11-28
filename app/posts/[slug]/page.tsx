@@ -16,11 +16,6 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { CategoryFilter } from "../../../components/category-filter"
 import { SearchBar } from "../../../components/search-bar"
-import { hasJwtToken } from "@/lib/auth-client"
-
-interface AdminProfile {
-  isAdmin: boolean;
-}
 
 interface Category {
   id: number
@@ -32,7 +27,7 @@ export default function PostPage() {
   const params = useParams()
   const router = useRouter()
   const [post, setPost] = useState<Post | null>(null)
-  const [isAdmin, setIsAdmin] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [categories, setCategories] = useState<Category[]>([])
@@ -66,9 +61,9 @@ export default function PostPage() {
         const slug = params.slug as string
         
         // 병렬로 데이터 가져오기 (중복 호출 방지)
-        const [postData, profile, cats, statsData] = await Promise.allSettled([
+        const [postData, authCheck, cats, statsData] = await Promise.allSettled([
           apiClient.getPostBySlug(slug),
-          apiClient.getAdminProfile().catch(() => null), // 실패해도 계속 진행
+          fetch("/api/auth/check").then(res => res.json()).catch(() => ({ authenticated: false })),
           apiClient.getCategories(),
           apiClient.getStats(),
         ])
@@ -82,8 +77,8 @@ export default function PostPage() {
           return
         }
 
-        if (profile.status === "fulfilled" && profile.value) {
-          setIsAdmin((profile.value as any)?.profile?.id === "admin")
+        if (authCheck.status === "fulfilled" && authCheck.value) {
+          setIsAuthenticated(authCheck.value.authenticated === true)
         }
 
         if (cats.status === "fulfilled") {
@@ -198,7 +193,7 @@ export default function PostPage() {
               </Link>
             </Button>
             {/* Admin 버튼 */}
-            {hasJwtToken() && post && (
+            {isAuthenticated && post && (
               <div className="flex gap-2 mb-4">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/posts/${post.slug}/edit`}>수정</Link>
@@ -211,7 +206,9 @@ export default function PostPage() {
             {/* Post Header + Content 통합 */}
             <Card className="mb-8">
               <CardContent className="p-8">
-                <div className="flex items-center gap-4 mb-4">
+                {/* 제목 표시 */}
+                <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
+                <div className="flex items-center gap-4 mb-6">
                   <Badge variant="secondary" className="text-sm">
                     {post.category_name || "미분류"}
                   </Badge>
@@ -221,6 +218,7 @@ export default function PostPage() {
                     {new Date(post.created_at).toLocaleDateString("ko-KR")}
                   </div>
                 </div>
+                <hr className="mb-6" />
                 <div className="prose prose-lg max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {post.content}

@@ -92,7 +92,14 @@ export async function PUT(req: Request) {
     }
 
     const decoded = verify(token, process.env.JWT_SECRET) as { userId: string }
-    if (!decoded || decoded.userId !== "admin") {
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
+    }
+
+    // admin_profile 테이블에 존재하는 사용자인지 확인
+    const { AdminModel } = await import("@/lib/models/admin")
+    const isAdmin = await AdminModel.isAdmin(decoded.userId)
+    if (!isAdmin) {
       return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 })
     }
 

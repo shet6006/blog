@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 
 async function generateHash() {
-  const password = 'admin'; // 여기에 원하는 비밀번호 입력
+  const password = process.argv[2] || 'admin'; // 실행 시 인자로 비밀번호 전달 가능
   const salt = await bcrypt.genSalt(10);
   const hash = await bcrypt.hash(password, salt);
   
