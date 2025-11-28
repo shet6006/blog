@@ -62,12 +62,12 @@ export default function HomePage() {
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">개발자 블로그</h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              {profile?.bio || "웹 개발, TypeScript, React 등 프론트엔드 기술에 대한 경험과 인사이트를 공유합니다."}
+              {profile?.bio || ""}
             </p>
             <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
               <div className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                <span>{profile?.name || "김개발"}</span>
+                <span>{profile?.name || "DDONG's"}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Github className="w-4 h-4" />

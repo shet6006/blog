@@ -3,10 +3,13 @@ import './globals.css'
 import { Toaster } from "@/components/ui/sonner"
 
 export const metadata: Metadata = {
-  title: '개발자 블로그',
-  description: '웹 개발, TypeScript, React 등 프론트엔드 기술에 대한 경험과 인사이트를 공유합니다.',
+  title: "DDONG's",
+  description: '',
   generator: 'Next.js',
   charset: 'utf-8',
+  icons: {
+    icon: '/icon.svg',  // app/icon.svg 파일 사용
+  },
 }
 
 export default function RootLayout({
