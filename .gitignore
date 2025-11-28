@@ -32,4 +32,3 @@ Dockerfile
 
 # AWS keys
 *.pem
-blog-key.pem
