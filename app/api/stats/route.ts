@@ -30,10 +30,17 @@ export async function GET(request: Request) {
       "SELECT COUNT(*) as total FROM comments"
     ) as any[]
 
+    // 총 방문자 수 (중복 제거된 IP 수)
+    const [visitorsResult] = await pool.execute(
+      "SELECT COUNT(DISTINCT ip_address) as total FROM visitors"
+    ) as any[]
+    const totalVisitors = visitorsResult[0]?.total || 0
+
     return NextResponse.json({
       totalPosts: postsResult[0].total,
       totalLikes: likesResult[0].total,
       totalComments: commentsResult[0].total,
+      totalVisitors,
     })
   } catch (error) {
     console.error("Stats API Error:", error)

@@ -22,12 +22,10 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
-  // HTML 태그 제거 및 내용 요약
-  const excerpt = post.content
-    .replace(/<[^>]*>/g, "")
-    .replace(/\n/g, " ")
+  // 마크다운에서 첫 번째 H1 제목 제거 (제목은 이미 카드에 표시됨)
+  const contentWithoutTitle = post.content
+    .replace(/^#\s+.*?\n\n?/m, '') // 첫 번째 H1 제목 제거
     .trim()
-    .slice(0, 150) + (post.content.length > 150 ? "..." : "")
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-200">
@@ -46,9 +44,15 @@ export function PostCard({ post }: PostCardProps) {
           <Link href={`/posts/${post.slug}`}>{post.title}</Link>
         </h3>
 
-        <div className="text-gray-600 mb-4 line-clamp-3 prose prose-sm max-w-none">
+        <div className="text-gray-600 mb-4 prose prose-sm max-w-none" style={{
+          display: '-webkit-box',
+          WebkitLineClamp: 5,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis'
+        }}>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {excerpt}
+            {contentWithoutTitle || "*내용이 없습니다.*"}
           </ReactMarkdown>
         </div>
       </CardContent>

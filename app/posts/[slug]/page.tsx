@@ -155,7 +155,7 @@ export default function PostPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <aside className="lg:col-span-1">
@@ -206,8 +206,6 @@ export default function PostPage() {
             {/* Post Header + Content 통합 */}
             <Card className="mb-8">
               <CardContent className="p-8">
-                {/* 제목 표시 */}
-                <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
                 <div className="flex items-center gap-4 mb-6">
                   <Badge variant="secondary" className="text-sm">
                     {post.category_name || "미분류"}

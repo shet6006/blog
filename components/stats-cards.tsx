@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileText, Heart, MessageCircle } from "lucide-react"
+import { FileText, Heart, MessageCircle, Users } from "lucide-react"
 
 interface Stats {
   totalPosts: number
   totalLikes: number
   totalComments: number
+  totalVisitors: number
 }
 
 export function StatsCards() {
@@ -15,6 +16,7 @@ export function StatsCards() {
     totalPosts: 0,
     totalLikes: 0,
     totalComments: 0,
+    totalVisitors: 0,
   })
 
   useEffect(() => {
@@ -47,10 +49,17 @@ export function StatsCards() {
       value: stats.totalComments.toString(),
       icon: MessageCircle,
     },
+    {
+      title: "총 방문자",
+      value: stats.totalVisitors.toString(),
+      icon: Users,
+    },
   ]
 
+  const gridCols = statsData.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className={`grid grid-cols-1 ${gridCols} gap-6`}>
       {statsData.map((stat) => {
         const Icon = stat.icon
         return (

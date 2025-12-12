@@ -13,6 +13,8 @@ import { Header } from "@/components/header"
 import { CategoryFilter } from "@/components/category-filter"
 import { Card, CardContent } from "@/components/ui/card"
 import { SearchBar } from "@/components/search-bar"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 export default function EditPostPage() {
   const params = useParams()
@@ -34,8 +36,18 @@ export default function EditPostPage() {
         })))
         const postRes = await fetch(`/api/posts/${slug}`)
         if (!postRes.ok) throw new Error()
-        setPost(await postRes.json())
-        const statsRes = await fetch("/api/admin/stats")
+        const postData = await postRes.json()
+        
+        // content에서 첫 번째 H1 제목 추출
+        const h1Match = postData.content?.match(/^#\s+(.+?)(?:\n|$)/m)
+        if (h1Match) {
+          // H1 제목이 있으면 제목 필드에 설정하고 content에서 제거
+          postData.title = h1Match[1].trim()
+          postData.content = postData.content.replace(/^#\s+.*?\n\n?/m, '').trim()
+        }
+        
+        setPost(postData)
+        const statsRes = await fetch("/api/stats")
         setStats(await statsRes.json())
       } catch {
         toast.error("게시글을 불러오는데 실패했습니다.")
@@ -63,12 +75,17 @@ export default function EditPostPage() {
         .replace(/-+/g, "-")
         .replace(/^-|-$/g, "")
       
+      // 제목을 H1 태그로 변환하여 content 앞에 추가
+      const contentWithTitle = post.content.trim().startsWith('#') 
+        ? post.content 
+        : `# ${post.title}\n\n${post.content}`
+      
       const res = await fetch(`/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: post.title,
-          content: post.content,
+          content: contentWithTitle,
           category_id: post.category_id,
           is_public: post.is_public ? 1 : 0, // MySQL용 변환
           slug: newSlug,
@@ -88,7 +105,7 @@ export default function EditPostPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <aside className="lg:col-span-1">
@@ -122,7 +139,7 @@ export default function EditPostPage() {
             <h1 className="text-2xl font-bold mb-6">게시글 수정</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">제목</Label>
+                <Label htmlFor="title">제목 (H1 태그로 저장됩니다)</Label>
                 <Input
                   id="title"
                   value={post.title || ""}
@@ -130,16 +147,29 @@ export default function EditPostPage() {
                   placeholder="게시글 제목"
                   required
                 />
+                <p className="text-sm text-gray-500">제목은 자동으로 H1 태그(# 제목)로 저장됩니다.</p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="content">내용</Label>
-                <Textarea
-                  id="content"
-                  value={post.content}
-                  onChange={e => setPost({ ...post, content: e.target.value })}
-                  className="min-h-[300px]"
-                  required
-                />
+                <Label>내용 (마크다운)</Label>
+                <div className="border rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
+                  <div className="grid grid-cols-2 h-[600px]">
+                    <div className="border-r">
+                      <Textarea
+                        id="content"
+                        placeholder="마크다운으로 게시글을 작성하세요..."
+                        value={post.content}
+                        onChange={e => setPost({ ...post, content: e.target.value })}
+                        className="h-full font-mono border-0 rounded-none resize-none"
+                        required
+                      />
+                    </div>
+                    <div className="overflow-auto p-6 prose prose-lg max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {post.content || "*내용을 입력하세요...*"}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">카테고리</Label>

@@ -50,6 +50,9 @@ export default function HomePage() {
     };
     
     loadData();
+    
+    // 방문자 추적 (페이지 로드 시 한 번만)
+    fetch("/api/visitors/track", { method: "POST" }).catch(() => {});
   }, [category, search, page, sortBy]);
 
   return (
@@ -58,7 +61,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <section className="bg-white border-b">
-        <div className="max-w-6xl mx-auto px-4 py-16">
+        <div className="max-w-7xl mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">개발자 블로그</h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -79,7 +82,7 @@ export default function HomePage() {
       </section>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
           <aside className="lg:col-span-1">
@@ -103,6 +106,10 @@ export default function HomePage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">총 댓글</span>
                       <span className="font-medium">{stats?.totalComments}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">총 방문자</span>
+                      <span className="font-medium">{stats?.totalVisitors || 0}</span>
                     </div>
                   </div>
                 </CardContent>

@@ -5,15 +5,17 @@ import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save, Eye } from "lucide-react"
+import { ArrowLeft, Save } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
+import { Textarea } from "@/components/ui/textarea"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface Category {
   id: number
@@ -33,7 +35,6 @@ export default function WritePage() {
     slug: "",
   })
 
-  const [isPreview, setIsPreview] = useState(false)
 
   useEffect(() => {
     checkAuthAndLoadData()
@@ -78,6 +79,11 @@ export default function WritePage() {
 
   const handleSave = async () => {
     try {
+      // 제목을 H1 태그로 변환하여 content 앞에 추가
+      const contentWithTitle = post.content.trim().startsWith('#') 
+        ? post.content 
+        : `# ${post.title}\n\n${post.content}`
+      
       const response = await fetch("/api/admin/posts", {
         method: "POST",
         headers: {
@@ -85,6 +91,7 @@ export default function WritePage() {
         },
         body: JSON.stringify({
           ...post,
+          content: contentWithTitle,
           category_id: Number.parseInt(post.category_id) || 0,
           is_public: false, // 임시저장은 항상 비공개
         }),
@@ -106,6 +113,11 @@ export default function WritePage() {
 
   const handlePublish = async () => {
     try {
+      // 제목을 H1 태그로 변환하여 content 앞에 추가
+      const contentWithTitle = post.content.trim().startsWith('#') 
+        ? post.content 
+        : `# ${post.title}\n\n${post.content}`
+      
       const response = await fetch("/api/admin/posts", {
         method: "POST",
         headers: {
@@ -113,6 +125,7 @@ export default function WritePage() {
         },
         body: JSON.stringify({
           ...post,
+          content: contentWithTitle,
           category_id: Number.parseInt(post.category_id) || 0,
           is_public: true,
         }),
@@ -157,7 +170,7 @@ export default function WritePage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
@@ -171,10 +184,6 @@ export default function WritePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setIsPreview(!isPreview)}>
-              <Eye className="w-4 h-4 mr-2" />
-              {isPreview ? "편집" : "미리보기"}
-            </Button>
             <Button variant="outline" onClick={handleSave}>
               <Save className="w-4 h-4 mr-2" />
               임시저장
@@ -191,55 +200,49 @@ export default function WritePage() {
                 <CardTitle>게시글 작성</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {!isPreview ? (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="title">제목</Label>
-                      <Input
-                        id="title"
-                        placeholder="게시글 제목을 입력하세요"
-                        value={post.title}
-                        onChange={(e) => handleTitleChange(e.target.value)}
-                      />
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">제목 (H1 태그로 저장됩니다)</Label>
+                  <Input
+                    id="title"
+                    placeholder="게시글 제목을 입력하세요"
+                    value={post.title}
+                    onChange={(e) => handleTitleChange(e.target.value)}
+                  />
+                  <p className="text-sm text-gray-500">제목은 자동으로 H1 태그(# 제목)로 저장됩니다.</p>
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="slug">URL 슬러그</Label>
-                      <Input
-                        id="slug"
-                        placeholder="url-slug"
-                        value={post.slug}
-                        onChange={(e) => setPost({ ...post, slug: e.target.value })}
-                      />
-                      <p className="text-sm text-gray-500">게시글 URL: /posts/{post.slug || "url-slug"}</p>
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="slug">URL 슬러그</Label>
+                  <Input
+                    id="slug"
+                    placeholder="url-slug"
+                    value={post.slug}
+                    onChange={(e) => setPost({ ...post, slug: e.target.value })}
+                  />
+                  <p className="text-sm text-gray-500">게시글 URL: /posts/{post.slug || "url-slug"}</p>
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="content">내용 (마크다운)</Label>
-                      <Textarea
-                        id="content"
-                        placeholder="마크다운으로 게시글을 작성하세요..."
-                        value={post.content}
-                        onChange={(e) => setPost({ ...post, content: e.target.value })}
-                        rows={20}
-                        className="font-mono"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <div className="space-y-6">
-                    <div>
-                      <h1 className="text-3xl font-bold text-gray-900 mb-4">{post.title || "제목을 입력하세요"}</h1>
-                      <div className="prose prose-lg max-w-none">
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: post.content.replace(/\n/g, "<br>") || "내용을 입력하세요...",
-                          }}
+                <div className="space-y-2">
+                  <Label>내용 (마크다운)</Label>
+                  <div className="border rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
+                    <div className="grid grid-cols-2 h-[600px]">
+                      <div className="border-r">
+                        <Textarea
+                          id="content"
+                          placeholder="마크다운으로 게시글을 작성하세요..."
+                          value={post.content}
+                          onChange={(e) => setPost({ ...post, content: e.target.value })}
+                          className="h-full font-mono border-0 rounded-none resize-none"
                         />
+                      </div>
+                      <div className="overflow-auto p-6 prose prose-lg max-w-none">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {post.content || "*내용을 입력하세요...*"}
+                        </ReactMarkdown>
                       </div>
                     </div>
                   </div>
-                )}
+                </div>
               </CardContent>
             </Card>
           </div>

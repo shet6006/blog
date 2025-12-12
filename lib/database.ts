@@ -25,7 +25,7 @@ const dbConfig = {
 // 연결 풀 생성
 // 개발 환경에서는 연결 수를 줄이고, 프로덕션에서는 더 많이 사용
 const isDevelopment = process.env.NODE_ENV !== "production"
-const defaultConnectionLimit = isDevelopment ? 5 : 10
+const defaultConnectionLimit = isDevelopment ? 2 : 10
 
 const pool = mysql.createPool({
   ...dbConfig,
@@ -34,12 +34,10 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  // 연결 재사용 설정
-  reconnect: true,
-  // 연결 타임아웃 설정
-  acquireTimeout: 60000,
-  // 연결 유지 시간
-  timeout: 60000,
+  // 연결 타임아웃 설정 (밀리초)
+  acquireTimeout: 30000, // 30초로 단축
+  // 연결 유지 시간 (밀리초)
+  timeout: 30000, // 30초로 단축
 })
 
 // 초기화 상태 추적 (싱글톤 패턴)
@@ -110,15 +108,8 @@ export async function initializeDatabase() {
 if (typeof window === "undefined") {
   // 개발 환경에서는 초기화를 지연시켜 핫 리로드 문제 방지
   if (isDevelopment) {
-    // 약간의 지연 후 초기화 (핫 리로드 시 연결 누적 방지)
-    setTimeout(() => {
-      initializeDatabase().catch((error) => {
-        // "Too many connections" 오류는 무시 (이미 연결이 있는 경우)
-        if (error?.code !== 'ER_CON_COUNT_ERROR') {
-          console.error("데이터베이스 초기화 실패:", error)
-        }
-      })
-    }, 1000)
+    // 개발 환경에서는 초기화하지 않음 (핫 리로드 시 연결 누적 방지)
+    // 필요 시 수동으로 initializeDatabase() 호출
   } else {
     // 프로덕션에서는 즉시 초기화
     initializeDatabase().catch((error) => {

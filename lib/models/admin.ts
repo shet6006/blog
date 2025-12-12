@@ -11,13 +11,6 @@ export interface AdminProfile {
   updated_at: string
 }
 
-export interface BlogStats {
-  totalPosts: number
-  totalLikes: number
-  totalComments: number
-  monthlyViews: number
-}
-
 export class AdminModel {
   // 관리자 프로필 조회 (id로 조회, 기본값은 첫 번째 관리자)
   static async getProfile(adminId?: string): Promise<AdminProfile | null> {
@@ -52,27 +45,4 @@ export class AdminModel {
     return this.getProfile(adminId)
   }
 
-  // 블로그 통계 조회
-  static async getStats(): Promise<BlogStats> {
-    // 총 공개 게시글 수
-    const [postsResult] = await pool.execute<RowDataPacket[]>(
-      "SELECT COUNT(*) as count FROM posts WHERE is_public = true",
-    )
-
-    // 총 좋아요 수
-    const [likesResult] = await pool.execute<RowDataPacket[]>("SELECT COUNT(*) as count FROM likes")
-
-    // 총 댓글 수
-    const [commentsResult] = await pool.execute<RowDataPacket[]>("SELECT COUNT(*) as count FROM comments")
-
-    // 월간 조회수 (임시 데이터)
-    const monthlyViews = Math.floor(Math.random() * 10000) + 5000
-
-    return {
-      totalPosts: postsResult[0].count,
-      totalLikes: likesResult[0].count,
-      totalComments: commentsResult[0].count,
-      monthlyViews,
-    }
-  }
 }

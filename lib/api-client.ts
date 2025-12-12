@@ -131,7 +131,7 @@ class ApiClient {
 
   // Admin
   async getStats() {
-    return this.request(`${this.baseUrl}/admin/stats`)
+    return this.request(`${this.baseUrl}/stats`)
   }
 
   async getAdminProfile() {
