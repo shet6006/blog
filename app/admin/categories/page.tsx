@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
+import { getApiBaseUrl } from "@/lib/api-client"
 
 interface Category {
   id: number
@@ -31,7 +32,7 @@ export default function CategoriesManagementPage() {
 
   const checkAuthAndLoadCategories = async () => {
     try {
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include",
       })
       
@@ -61,7 +62,7 @@ export default function CategoriesManagementPage() {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch("/api/admin/categories")
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/categories`, { credentials: "include" })
       if (response.ok) {
         const data = await response.json()
         setCategories(data.categories || [])
@@ -79,9 +80,10 @@ export default function CategoriesManagementPage() {
     }
 
     try {
-      const response = await fetch("/api/admin/categories", {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/categories`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(newCategory),
       })
 
@@ -103,8 +105,9 @@ export default function CategoriesManagementPage() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return
 
     try {
-      const response = await fetch(`/api/admin/categories/${categoryId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/categories/${categoryId}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (response.ok) {

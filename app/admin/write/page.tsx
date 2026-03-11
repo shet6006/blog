@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
@@ -9,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, Save } from "lucide-react"
+import { ArrowLeft, Save, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { apiClient } from "@/lib/api-client"
+import { apiClient, getApiBaseUrl } from "@/lib/api-client"
 import { Textarea } from "@/components/ui/textarea"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -35,6 +35,10 @@ export default function WritePage() {
     slug: "",
   })
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
 
   useEffect(() => {
     checkAuthAndLoadData()
@@ -42,7 +46,7 @@ export default function WritePage() {
 
   const checkAuthAndLoadData = async () => {
     try {
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include",
       })
       
@@ -62,7 +66,7 @@ export default function WritePage() {
       }
 
       // 카테고리 데이터 로드
-      const categoriesResponse = await fetch("/api/admin/categories", {
+      const categoriesResponse = await fetch(`${getApiBaseUrl()}/api/admin/categories`, {
         credentials: "include",
       })
       if (categoriesResponse.ok) {
@@ -84,11 +88,12 @@ export default function WritePage() {
         ? post.content 
         : `# ${post.title}\n\n${post.content}`
       
-      const response = await fetch("/api/admin/posts", {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           ...post,
           content: contentWithTitle,
@@ -118,11 +123,12 @@ export default function WritePage() {
         ? post.content 
         : `# ${post.title}\n\n${post.content}`
       
-      const response = await fetch("/api/admin/posts", {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           ...post,
           content: contentWithTitle,
@@ -160,6 +166,65 @@ export default function WritePage() {
       title,
       slug: generateSlug(title),
     })
+  }
+
+  const insertAtCursor = (snippet: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) {
+      setPost(prev => ({ ...prev, content: (prev.content || "") + snippet }))
+      return
+    }
+    const { selectionStart, selectionEnd } = textarea
+    const start = selectionStart ?? post.content.length
+    const end = selectionEnd ?? post.content.length
+    const before = post.content.slice(0, start)
+    const after = post.content.slice(end)
+    const newContent = `${before}${snippet}${after}`
+    setPost(prev => ({ ...prev, content: newContent }))
+
+    // 커서 위치를 새로 삽입된 뒤로 이동
+    requestAnimationFrame(() => {
+      const pos = start + snippet.length
+      textarea.selectionStart = textarea.selectionEnd = pos
+      textarea.focus()
+    })
+  }
+
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+
+    try {
+      setIsUploadingImage(true)
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch(`${getApiBaseUrl()}/api/uploads/image`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || "이미지 업로드에 실패했습니다.")
+      }
+
+      const imageUrl = `${getApiBaseUrl()}${data.url}`
+      const snippet = `\n\n![이미지 설명](${imageUrl})\n\n`
+      insertAtCursor(snippet)
+    } catch (error: any) {
+      console.error("이미지 업로드 실패:", error)
+      toast.error(error.message || "이미지 업로드에 실패했습니다.")
+    } finally {
+      setIsUploadingImage(false)
+    }
   }
 
   if (isLoading) {
@@ -223,7 +288,28 @@ export default function WritePage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>내용 (마크다운)</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="content">내용 (마크다운)</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageSelected}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleImageUploadClick}
+                        disabled={isUploadingImage}
+                      >
+                        <ImageIcon className="w-4 h-4 mr-1" />
+                        {isUploadingImage ? "업로드 중..." : "이미지 업로드"}
+                      </Button>
+                    </div>
+                  </div>
                   <div className="border rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
                     <div className="grid grid-cols-2 h-[600px]">
                       <div className="border-r">
@@ -232,6 +318,7 @@ export default function WritePage() {
                           placeholder="마크다운으로 게시글을 작성하세요..."
                           value={post.content}
                           onChange={(e) => setPost({ ...post, content: e.target.value })}
+                          ref={textareaRef}
                           className="h-full font-mono border-0 rounded-none resize-none"
                         />
                       </div>

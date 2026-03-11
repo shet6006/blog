@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { getApiBaseUrl } from "@/lib/api-client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Heart, MessageCircle, Users } from "lucide-react"
 
@@ -22,7 +23,7 @@ export function StatsCards() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch("/api/stats")
+        const response = await fetch(`${getApiBaseUrl()}/api/stats`)
         const data = await response.json()
         setStats(data)
       } catch (error) {

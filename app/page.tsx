@@ -1,5 +1,6 @@
 "use client";
 import { useSearchParams } from "next/navigation";
+import { getApiBaseUrl } from "@/lib/api-client";
 import { useEffect, useState } from "react";
 import { Header } from "@/components/header"
 import { PostCard } from "@/components/post-card"
@@ -52,7 +53,7 @@ export default function HomePage() {
     loadData();
     
     // 방문자 추적 (페이지 로드 시 한 번만)
-    fetch("/api/visitors/track", { method: "POST" }).catch(() => {});
+    fetch(`${getApiBaseUrl()}/api/visitors/track`, { method: "POST", credentials: "include" }).catch(() => {});
   }, [category, search, page, sortBy]);
 
   return (

@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { getApiBaseUrl } from "./api-client"
 
 interface AuthContextType {
   isLoggedIn: boolean
@@ -36,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include",
       })
       

@@ -1,13 +1,22 @@
-// 프론트엔드에서 사용할 API 클라이언트
+// Spring 백엔드 API base URL (.env.local의 NEXT_PUBLIC_API_URL)
+export function getApiBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_API_URL || ""
+}
+
+// 프론트엔드에서 사용할 API 클라이언트 (Spring 백엔드 직접 호출)
 class ApiClient {
-  private baseUrl = "/api"
+  private get baseUrl() {
+    return `${getApiBaseUrl()}/api`
+  }
 
   private async request<T>(url: string, options?: RequestInit): Promise<T> {
-    // httpOnly 쿠키는 자동으로 전송되므로 Authorization 헤더 불필요
-    // credentials: 'include'로 쿠키 자동 전송 보장
-    const headers = {
-      "Content-Type": "application/json",
-      ...(options?.headers || {}),
+    // GET은 Content-Type 생략 → simple request로 preflight 방지. POST/PUT/DELETE는 JSON 필요
+    const needsJson = options?.method && !["GET", "HEAD"].includes(options.method)
+    const headers: Record<string, string> = {
+      ...(options?.headers as Record<string, string> || {}),
+    }
+    if (needsJson && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json"
     }
 
     const response = await fetch(url, {

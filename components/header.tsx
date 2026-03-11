@@ -16,6 +16,7 @@ import { Menu, X, Github, Settings, LogOut, PenTool } from "lucide-react"
 import { toast } from "sonner"
 import { LoginModal } from "./login-modal"
 import { Profile } from "@/lib/profile"
+import { getApiBaseUrl } from "@/lib/api-client"
 
 
 export function Header() {
@@ -41,7 +42,7 @@ export function Header() {
         })
       }
       
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include", // 쿠키 자동 전송
       })
       
@@ -62,7 +63,7 @@ export function Header() {
           setUser(data.user)
           
           // 프로필 정보 가져오기
-          const profileResponse = await fetch("/api/admin/profile", {
+          const profileResponse = await fetch(`${getApiBaseUrl()}/api/admin/profile`, {
             credentials: "include",
           })
           if (profileResponse.ok) {
@@ -91,8 +92,9 @@ export function Header() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch("/api/auth/logout", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
         method: "POST",
+        credentials: "include",
       })
 
       if (response.ok) {

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { Profile } from "@/lib/profile"
+import { getApiBaseUrl } from "@/lib/api-client"
 import { Header } from "@/components/header"
 
 export default function ProfilePage() {
@@ -29,7 +30,7 @@ export default function ProfilePage() {
 
     const checkAuthAndLoadData = async () => {
         try {
-            const response = await fetch("/api/auth/check", {
+            const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
                 credentials: "include",
             })
             
@@ -49,7 +50,7 @@ export default function ProfilePage() {
             }
 
             // 프로필 데이터 로드
-            const profileResponse = await fetch("/api/admin/profile", {
+            const profileResponse = await fetch(`${getApiBaseUrl()}/api/admin/profile`, {
                 credentials: "include",
             })
             if (profileResponse.ok) {
@@ -73,11 +74,12 @@ export default function ProfilePage() {
 
     const handleUpdateProfile = async () => {
         try {
-            const response = await fetch("/api/admin/profile", {
+            const response = await fetch(`${getApiBaseUrl()}/api/admin/profile`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                 },
+                credentials: "include",
                 body: JSON.stringify(newProfile),
             })
 

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Edit, Save, X } from "lucide-react"
 import { toast } from "sonner"
-import { apiClient } from "@/lib/api-client"
+import { apiClient, getApiBaseUrl } from "@/lib/api-client"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,7 +41,7 @@ export default function AboutPage() {
 
   const checkAdmin = async () => {
     try {
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include",
       })
       if (response.ok) {
@@ -56,7 +56,7 @@ export default function AboutPage() {
 
   const loadAbout = async () => {
     try {
-      const response = await fetch("/api/about")
+      const response = await fetch(`${getApiBaseUrl()}/api/about`)
       if (response.ok) {
         const data = await response.json()
         setAbout(data)
@@ -76,7 +76,7 @@ export default function AboutPage() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch("/api/about", {
+      const response = await fetch(`${getApiBaseUrl()}/api/about`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",

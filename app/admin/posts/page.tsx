@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Edit, Trash2, Eye, EyeOff, Search } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getApiBaseUrl } from "@/lib/api-client"
 
 interface Post {
   id: number
@@ -37,7 +38,7 @@ export default function PostsManagementPage() {
 
   const checkAuthAndLoadPosts = async () => {
     try {
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include",
       })
       
@@ -67,7 +68,7 @@ export default function PostsManagementPage() {
 
   const loadPosts = async () => {
     try {
-      const response = await fetch("/api/admin/posts", {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         credentials: "include",
       })
       if (response.ok) {
@@ -90,8 +91,9 @@ export default function PostsManagementPage() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return
 
     try {
-      const response = await fetch(`/api/posts/${slug}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (response.ok) {
@@ -108,9 +110,10 @@ export default function PostsManagementPage() {
 
   const toggleVisibility = async (postId: number, slug: string, currentStatus: boolean) => {
     try {
-      const response = await fetch(`/api/posts/${slug}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ is_public: !currentStatus }),
       })
 

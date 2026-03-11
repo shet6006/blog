@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { getApiBaseUrl } from "@/lib/api-client"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,7 +30,7 @@ export function PostsTable() {
 
   const loadPosts = async () => {
     try {
-      const response = await fetch("/api/admin/posts", {
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         credentials: "include",
       })
       if (response.ok) {
@@ -54,8 +55,9 @@ export function PostsTable() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return
 
     try {
-      const response = await fetch(`/api/posts/${slug}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "DELETE",
+        credentials: "include",
       })
 
       if (response.ok) {
@@ -68,9 +70,10 @@ export function PostsTable() {
 
   const toggleStatus = async (id: number, slug: string, currentStatus: boolean) => {
     try {
-      const response = await fetch(`/api/posts/${slug}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ is_public: !currentStatus }),
       })
 

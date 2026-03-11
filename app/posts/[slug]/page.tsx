@@ -10,7 +10,7 @@ import { Button } from "../../../components/ui/button"
 import { Card, CardContent } from "../../../components/ui/card"
 import { Calendar, User, Github, ExternalLink, ArrowLeft, Heart, MessageCircle } from "lucide-react"
 import Link from "next/link"
-import { apiClient } from "../../../lib/api-client"
+import { apiClient, getApiBaseUrl } from "../../../lib/api-client"
 import { Post } from "../../../lib/models/post"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -63,7 +63,7 @@ export default function PostPage() {
         // 병렬로 데이터 가져오기 (중복 호출 방지)
         const [postData, authCheck, cats, statsData] = await Promise.allSettled([
           apiClient.getPostBySlug(slug),
-          fetch("/api/auth/check").then(res => res.json()).catch(() => ({ authenticated: false })),
+          fetch(`${getApiBaseUrl()}/api/auth/check`, { credentials: "include" }).then(res => res.json()).catch(() => ({ authenticated: false })),
           apiClient.getCategories(),
           apiClient.getStats(),
         ])

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { getApiBaseUrl } from "@/lib/api-client"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,16 +26,20 @@ export default function EditPostPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState<any>({})
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const categoriesRes = await fetch("/api/categories")
+        const categoriesRes = await fetch(`${getApiBaseUrl()}/api/categories`)
         const cats = await categoriesRes.json()
         setCategories((cats as any[]).map((cat) => ({
           ...cat,
           postCount: cat.post_count ?? 0,
         })))
-        const postRes = await fetch(`/api/posts/${slug}`)
+        const postRes = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`)
         if (!postRes.ok) throw new Error()
         const postData = await postRes.json()
         
@@ -47,7 +52,7 @@ export default function EditPostPage() {
         }
         
         setPost(postData)
-        const statsRes = await fetch("/api/stats")
+        const statsRes = await fetch(`${getApiBaseUrl()}/api/stats`)
         setStats(await statsRes.json())
       } catch {
         toast.error("게시글을 불러오는데 실패했습니다.")
@@ -57,6 +62,66 @@ export default function EditPostPage() {
     }
     fetchData()
   }, [slug])
+
+  const insertAtCursor = (snippet: string) => {
+    const textarea = textareaRef.current
+    if (!textarea) {
+      setPost((prev: any) => ({ ...prev, content: (prev?.content || "") + snippet }))
+      return
+    }
+    const currentContent = (post?.content || "") as string
+    const { selectionStart, selectionEnd } = textarea
+    const start = selectionStart ?? currentContent.length
+    const end = selectionEnd ?? currentContent.length
+    const before = currentContent.slice(0, start)
+    const after = currentContent.slice(end)
+    const newContent = `${before}${snippet}${after}`
+
+    setPost((prev: any) => ({ ...prev, content: newContent }))
+
+    requestAnimationFrame(() => {
+      const pos = start + snippet.length
+      textarea.selectionStart = textarea.selectionEnd = pos
+      textarea.focus()
+    })
+  }
+
+  const handleImageUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+
+    try {
+      setIsUploadingImage(true)
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const response = await fetch(`${getApiBaseUrl()}/api/uploads/image`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || "이미지 업로드에 실패했습니다.")
+      }
+
+      const imageUrl = `${getApiBaseUrl()}${data.url}`
+      const snippet = `\n\n![이미지 설명](${imageUrl})\n\n`
+      insertAtCursor(snippet)
+    } catch (error: any) {
+      console.error("이미지 업로드 실패:", error)
+      toast.error(error.message || "이미지 업로드에 실패했습니다.")
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -80,9 +145,10 @@ export default function EditPostPage() {
         ? post.content 
         : `# ${post.title}\n\n${post.content}`
       
-      const res = await fetch(`/api/posts/${slug}`, {
+      const res = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           title: post.title,
           content: contentWithTitle,
@@ -150,7 +216,27 @@ export default function EditPostPage() {
                 <p className="text-sm text-gray-500">제목은 자동으로 H1 태그(# 제목)로 저장됩니다.</p>
               </div>
               <div className="space-y-2">
-                <Label>내용 (마크다운)</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="content">내용 (마크다운)</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageSelected}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleImageUploadClick}
+                      disabled={isUploadingImage}
+                    >
+                      이미지 업로드
+                    </Button>
+                  </div>
+                </div>
                 <div className="border rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
                   <div className="grid grid-cols-2 h-[600px]">
                     <div className="border-r">
@@ -159,6 +245,7 @@ export default function EditPostPage() {
                         placeholder="마크다운으로 게시글을 작성하세요..."
                         value={post.content}
                         onChange={e => setPost({ ...post, content: e.target.value })}
+                        ref={textareaRef}
                         className="h-full font-mono border-0 rounded-none resize-none"
                         required
                       />

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Trash2, Search } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getApiBaseUrl } from "@/lib/api-client"
 
 interface Comment {
   id: number
@@ -36,7 +37,7 @@ export default function CommentsManagementPage() {
 
   const checkAuthAndLoadComments = async () => {
     try {
-      const response = await fetch("/api/auth/check", {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include",
       })
       
@@ -66,7 +67,7 @@ export default function CommentsManagementPage() {
 
   const loadComments = async () => {
     try {
-      const response = await fetch("/api/admin/comments")
+      const response = await fetch(`${getApiBaseUrl()}/api/admin/comments`, { credentials: "include" })
       if (response.ok) {
         const data = await response.json()
         setComments(data.comments || [])
@@ -81,9 +82,10 @@ export default function CommentsManagementPage() {
     if (!window.confirm("정말 삭제하시겠습니까?")) return
 
     try {
-      const response = await fetch(`/api/comments/${postSlug}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/comments/${postSlug}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ commentId }),
       })
 

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MessageCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
-import { apiClient } from "@/lib/api-client"
+import { apiClient, getApiBaseUrl } from "@/lib/api-client"
 
 interface Comment {
   id: number
@@ -85,9 +85,10 @@ export function CommentSection({ postSlug }: CommentSectionProps) {
 
   const handleDelete = async (commentId: string) => {
     try {
-      const response = await fetch(`/api/comments/${postSlug}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/comments/${postSlug}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ commentId }),
       })
       

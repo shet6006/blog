@@ -16,8 +16,7 @@ const nextConfig = {
     //   },
     // ],
   },
-  // 프로덕션에서 basePath 설정 (필요한 경우만)
-  // basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  // Next.js는 프론트엔드만 담당. API는 Spring 백엔드(NEXT_PUBLIC_API_URL)로 직접 호출.
 }
 
 export default nextConfig
