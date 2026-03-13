@@ -14,6 +14,8 @@ import { apiClient, getApiBaseUrl } from "../../../lib/api-client"
 import { Post } from "../../../lib/models/post"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism"
 import { CategoryFilter } from "../../../components/category-filter"
 import { SearchBar } from "../../../components/search-bar"
 
@@ -21,6 +23,18 @@ interface Category {
   id: number
   name: string
   postCount: number
+}
+
+const codeStyle = {
+  ...atomDark,
+  'pre[class*="language-"]': {
+    ...(atomDark as any)['pre[class*="language-"]'],
+    background: "transparent",
+  },
+  'code[class*="language-"]': {
+    ...(atomDark as any)['code[class*="language-"]'],
+    background: "transparent",
+  },
 }
 
 export default function PostPage() {
@@ -218,7 +232,38 @@ export default function PostPage() {
                 </div>
                 <hr className="mb-6" />
                 <div className="prose prose-lg max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code({ node, inline, className, children }) {
+  const rawClass = className || ""
+  const lang = rawClass
+    .split(" ")
+    .find((c) => c.startsWith("language-"))
+    ?.replace("language-", "")
+    .trim()
+    .toLowerCase()
+
+  if (!inline && lang) {
+    return (
+      <SyntaxHighlighter
+        style={codeStyle}
+        language={lang}
+        PreTag="div"
+      >
+        {String(children).replace(/\n$/, "")}
+      </SyntaxHighlighter>
+    )
+  }
+
+  return (
+    <code className={className}>
+      {children}
+    </code>
+  )
+}
+                    }}
+                  >
                     {post.content}
                   </ReactMarkdown>
                 </div>

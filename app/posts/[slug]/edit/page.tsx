@@ -16,6 +16,20 @@ import { Card, CardContent } from "@/components/ui/card"
 import { SearchBar } from "@/components/search-bar"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter"
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism"
+
+const codeStyle = {
+  ...atomDark,
+  'pre[class*="language-"]': {
+    ...(atomDark as any)['pre[class*="language-"]'],
+    background: "transparent",
+  },
+  'code[class*="language-"]': {
+    ...(atomDark as any)['code[class*="language-"]'],
+    background: "transparent",
+  },
+}
 
 export default function EditPostPage() {
   const params = useParams()
@@ -251,7 +265,39 @@ export default function EditPostPage() {
                       />
                     </div>
                     <div className="overflow-auto p-6 prose prose-lg max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ node, inline, className, children, ...props }) {
+                            const rawClass = className || ""
+                            const lang = rawClass
+                              .split(" ")
+                              .find((c) => c.startsWith("language-"))
+                              ?.replace("language-", "")
+                              .trim()
+                              .toLowerCase()
+
+                            if (!inline && lang) {
+                              return (
+                                <SyntaxHighlighter
+                                  style={codeStyle}
+                                  language={lang}
+                                  PreTag="div"
+                                  {...props}
+                                >
+                                  {String(children).replace(/\n$/, "")}
+                                </SyntaxHighlighter>
+                              )
+                            }
+
+                            return (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            )
+                          },
+                        }}
+                      >
                         {post.content || "*내용을 입력하세요...*"}
                       </ReactMarkdown>
                     </div>
