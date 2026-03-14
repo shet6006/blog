@@ -9,17 +9,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Prepare SSH key
-        run: |
-          printf '%s' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > key.pem
-          chmod 600 key.pem
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: key.pem
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/blogg/blog
             git pull origin master
