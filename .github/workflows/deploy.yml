@@ -16,7 +16,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/blog
+            cd ${{ secrets.EC2_BLOG_PATH || '/home/ec2-user/blogg/blog' }}
             git pull origin master
             npm ci
             npm run build
