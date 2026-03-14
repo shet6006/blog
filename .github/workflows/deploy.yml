@@ -18,7 +18,7 @@ jobs:
           script: |
             cd /home/ec2-user/blogg/blog
             git pull origin master
-            npm ci
+            npm ci --legacy-peer-deps
             npm run build
             pm2 restart blog-frontend
           script_stop: true
