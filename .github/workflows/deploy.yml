@@ -1,0 +1,24 @@
+# blog 프론트엔드 CD - master에 push/merge 시 EC2에 자동 배포
+name: Deploy Blog to EC2
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/blog
+            git pull origin master
+            npm ci
+            npm run build
+            pm2 restart blog || (pm2 start npm --name "blog" -- start)
+          script_stop: true
