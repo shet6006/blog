@@ -1,4 +1,4 @@
-# blog 프론트엔드 CD - master에 push/merge 시 EC2 배포 후 CloudFront 무효화
+# blog 프론트엔드 CD - master에 push/merge 시 EC2에 자동 배포
 name: Deploy Blog to EC2
 
 on:
@@ -22,18 +22,3 @@ jobs:
             npm run build
             pm2 restart blog-frontend
           script_stop: true
-
-      - name: Configure AWS (for CloudFront invalidation)
-        if: success()
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'ap-northeast-2' }}
-
-      - name: CloudFront cache invalidation
-        if: success()
-        run: |
-          aws cloudfront create-invalidation \
-            --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/*"
