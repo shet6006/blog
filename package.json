@@ -1,7 +1,11 @@
 {
-  "name": "my-v0-project",
+  "name": "blog-frontend",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x",
+    "npm": "10.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
