@@ -24,3 +24,5 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ""
         run: npm run build
+      - name: Build production container
+        run: docker build --tag blog-frontend:verify .
