@@ -284,7 +284,7 @@ export default function WritePage() {
                     value={post.slug}
                     onChange={(e) => setPost({ ...post, slug: e.target.value })}
                   />
-                  <p className="text-sm text-gray-500">게시글 URL: /posts/{post.slug || "url-slug"}</p>
+                  <p className="text-sm text-gray-500">게시글 URL: /posts/view?slug={post.slug || "url-slug"}</p>
                 </div>
 
                 <div className="space-y-2">

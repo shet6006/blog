@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { getApiBaseUrl } from "@/lib/api-client"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -16,14 +16,12 @@ import { Card, CardContent } from "@/components/ui/card"
 import { SearchBar } from "@/components/search-bar"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import { postViewHref } from "@/lib/post-routes"
 
 export default function EditPostPage() {
-  const params = useParams()
+  const searchParams = useSearchParams()
   const router = useRouter()
-  const routeSlug = (params as { slug: string }).slug
-  const slug = typeof window === "undefined"
-    ? routeSlug
-    : decodeURIComponent(window.location.pathname.split("/").filter(Boolean)[1] || routeSlug)
+  const slug = searchParams.get("slug") ?? ""
   const [post, setPost] = useState<any>(null)
   const [categories, setCategories] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -36,6 +34,7 @@ export default function EditPostPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        if (!slug) throw new Error("missing slug")
         const categoriesRes = await fetch(`${getApiBaseUrl()}/api/categories`)
         const cats = await categoriesRes.json()
         setCategories((cats as any[]).map((cat) => ({
@@ -162,7 +161,7 @@ export default function EditPostPage() {
       })
       if (!res.ok) throw new Error()
       toast.success("게시글이 수정되었습니다.")
-      router.push(`/posts/${newSlug}`)
+      router.push(postViewHref(newSlug))
     } catch {
       toast.error("게시글 수정에 실패했습니다.")
     }
@@ -279,7 +278,7 @@ export default function EditPostPage() {
                 <Label htmlFor="is_public">공개</Label>
               </div>
               <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" onClick={() => router.push(`/posts/${slug}`)}>취소</Button>
+                <Button type="button" variant="outline" onClick={() => router.push(postViewHref(slug))}>취소</Button>
                 <Button type="submit">수정</Button>
               </div>
             </form>

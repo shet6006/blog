@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { getApiBaseUrl } from "@/lib/api-client"
 import Link from "next/link"
+import { postEditHref, postViewHref } from "@/lib/post-routes"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -107,7 +108,7 @@ export function PostsTable() {
           postList.map((post) => (
             <TableRow key={post.id}>
               <TableCell className="font-medium">
-                <Link href={`/posts/${post.slug}`} className="hover:text-blue-600">
+                <Link href={postViewHref(post.slug)} className="hover:text-blue-600">
                   {post.title}
                 </Link>
               </TableCell>
@@ -131,7 +132,7 @@ export function PostsTable() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem asChild>
-                      <Link href={`/posts/${post.slug}/edit`}>
+                      <Link href={postEditHref(post.slug)}>
                         <Edit className="w-4 h-4 mr-2" />
                         수정
                       </Link>

@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Header } from "../../../components/header"
 import { CommentSection } from "../../../components/comment-section"
 import { LikeButton } from "../../../components/like-button"
@@ -16,6 +16,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { CategoryFilter } from "../../../components/category-filter"
 import { SearchBar } from "../../../components/search-bar"
+import { postEditHref } from "../../../lib/post-routes"
 
 interface Category {
   id: number
@@ -24,8 +25,9 @@ interface Category {
 }
 
 export default function PostPage() {
-  const params = useParams()
+  const searchParams = useSearchParams()
   const router = useRouter()
+  const slug = searchParams.get("slug") ?? ""
   const [post, setPost] = useState<Post | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -58,9 +60,10 @@ export default function PostPage() {
     
     const fetchData = async () => {
       try {
-        const slug = typeof window === "undefined"
-          ? params.slug as string
-          : decodeURIComponent(window.location.pathname.split("/").filter(Boolean)[1] || params.slug as string)
+        if (!slug) {
+          setError("게시글 주소가 올바르지 않습니다.")
+          return
+        }
         
         // 병렬로 데이터 가져오기 (중복 호출 방지)
         const [postData, authCheck, cats, statsData] = await Promise.allSettled([
@@ -109,7 +112,7 @@ export default function PostPage() {
     return () => {
       isMounted = false
     }
-  }, [params.slug])
+  }, [slug])
 
   const handleDelete = async () => {
     if (!post) return
@@ -198,7 +201,7 @@ export default function PostPage() {
             {isAuthenticated && post && (
               <div className="flex gap-2 mb-4">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/posts/${post.slug}/edit`}>수정</Link>
+                  <Link href={postEditHref(post.slug)}>수정</Link>
                 </Button>
                 <Button variant="destructive" size="sm" onClick={handleDelete}>
                   삭제

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { postViewHref } from "@/lib/post-routes"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,7 +42,7 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         <h3 className="text-xl font-semibold text-gray-900 mb-3 hover:text-blue-600 transition-colors">
-          <Link href={`/posts/${post.slug}`}>{post.title}</Link>
+          <Link href={postViewHref(post.slug)}>{post.title}</Link>
         </h3>
 
         <div className="text-gray-600 mb-4 prose prose-sm max-w-none" style={{
@@ -70,7 +71,7 @@ export function PostCard({ post }: PostCardProps) {
         </div>
 
         <Button variant="ghost" size="sm" asChild>
-          <Link href={`/posts/${post.slug}`}>읽어보기</Link>
+          <Link href={postViewHref(post.slug)}>읽어보기</Link>
         </Button>
       </CardFooter>
     </Card>
