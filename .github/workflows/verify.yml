@@ -34,6 +34,6 @@ jobs:
             sleep 1
           done
           curl --fail http://127.0.0.1:8088/
-          curl --fail http://127.0.0.1:8088/posts/example-post/
-          curl --fail http://127.0.0.1:8088/posts/example-post/edit/
+          curl --fail 'http://127.0.0.1:8088/posts/view/?slug=example-post'
+          curl --fail 'http://127.0.0.1:8088/posts/edit/?slug=example-post'
           docker rm --force blog-frontend

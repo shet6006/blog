@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Trash2, Search } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { postViewHref } from "@/lib/post-routes"
 import { getApiBaseUrl } from "@/lib/api-client"
 
 interface Comment {
@@ -163,7 +164,7 @@ export default function CommentsManagementPage() {
                       filteredComments.map((comment) => (
                         <TableRow key={comment.id}>
                           <TableCell>
-                            <Link href={`/posts/${comment.post_slug}`} className="hover:text-blue-600">
+                            <Link href={postViewHref(comment.post_slug)} className="hover:text-blue-600">
                               {comment.post_title || "제목 없음"}
                             </Link>
                           </TableCell>
