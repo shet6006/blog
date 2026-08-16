@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Save, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
-import { apiClient, getApiBaseUrl } from "@/lib/api-client"
+import { getApiBaseUrl } from "@/lib/api-client"
 import { Textarea } from "@/components/ui/textarea"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -84,10 +84,6 @@ export default function WritePage() {
   const handleSave = async () => {
     try {
       // 제목을 H1 태그로 변환하여 content 앞에 추가
-      const contentWithTitle = post.content.trim().startsWith('#') 
-        ? post.content 
-        : `# ${post.title}\n\n${post.content}`
-      
       const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
         headers: {
@@ -96,7 +92,7 @@ export default function WritePage() {
         credentials: "include",
         body: JSON.stringify({
           ...post,
-          content: contentWithTitle,
+          content: post.content,
           category_id: Number.parseInt(post.category_id) || 0,
           is_public: false, // 임시저장은 항상 비공개
         }),
@@ -119,10 +115,6 @@ export default function WritePage() {
   const handlePublish = async () => {
     try {
       // 제목을 H1 태그로 변환하여 content 앞에 추가
-      const contentWithTitle = post.content.trim().startsWith('#') 
-        ? post.content 
-        : `# ${post.title}\n\n${post.content}`
-      
       const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
         headers: {
@@ -131,7 +123,7 @@ export default function WritePage() {
         credentials: "include",
         body: JSON.stringify({
           ...post,
-          content: contentWithTitle,
+          content: post.content,
           category_id: Number.parseInt(post.category_id) || 0,
           is_public: true,
         }),

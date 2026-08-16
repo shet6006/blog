@@ -17,6 +17,7 @@ import { SearchBar } from "@/components/search-bar"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { postViewHref } from "@/lib/post-routes"
+import { normalizePostBody } from "@/lib/post-content"
 
 export default function EditPostPage() {
   const searchParams = useSearchParams()
@@ -46,12 +47,8 @@ export default function EditPostPage() {
         const postData = await postRes.json()
         
         // content에서 첫 번째 H1 제목 추출
-        const h1Match = postData.content?.match(/^#\s+(.+?)(?:\n|$)/m)
-        if (h1Match) {
+        postData.content = normalizePostBody(postData.content, postData.title)
           // H1 제목이 있으면 제목 필드에 설정하고 content에서 제거
-          postData.title = h1Match[1].trim()
-          postData.content = postData.content.replace(/^#\s+.*?\n\n?/m, '').trim()
-        }
         
         setPost(postData)
         const statsRes = await fetch(`${getApiBaseUrl()}/api/stats`)
@@ -143,17 +140,13 @@ export default function EditPostPage() {
         .replace(/^-|-$/g, "")
       
       // 제목을 H1 태그로 변환하여 content 앞에 추가
-      const contentWithTitle = post.content.trim().startsWith('#') 
-        ? post.content 
-        : `# ${post.title}\n\n${post.content}`
-      
       const res = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           title: post.title,
-          content: contentWithTitle,
+          content: post.content,
           category_id: post.category_id,
           is_public: post.is_public ? 1 : 0, // MySQL용 변환
           slug: newSlug,

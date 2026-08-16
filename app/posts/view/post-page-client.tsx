@@ -17,6 +17,7 @@ import remarkGfm from "remark-gfm"
 import { CategoryFilter } from "../../../components/category-filter"
 import { SearchBar } from "../../../components/search-bar"
 import { postEditHref } from "../../../lib/post-routes"
+import { normalizePostBody } from "../../../lib/post-content"
 
 interface Category {
   id: number
@@ -211,6 +212,7 @@ export default function PostPage() {
             {/* Post Header + Content 통합 */}
             <Card className="mb-8">
               <CardContent className="p-8">
+                <h1 className="mb-4 text-4xl font-bold tracking-tight text-gray-950">{post.title}</h1>
                 <div className="flex items-center gap-4 mb-6">
                   <Badge variant="secondary" className="text-sm">
                     {post.category_name || "미분류"}
@@ -224,7 +226,7 @@ export default function PostPage() {
                 <hr className="mb-6" />
                 <div className="prose prose-lg max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {post.content}
+                    {normalizePostBody(post.content, post.title)}
                   </ReactMarkdown>
                 </div>
               </CardContent>
