@@ -130,7 +130,7 @@ export function MarkdownArticle({ content, className }: { content: string; class
 
   return (
     <div className={cn("article-body prose prose-slate prose-lg max-w-none", className)}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[[rehypeHighlight, { detect: true }]]} components={components}>
         {content}
       </ReactMarkdown>
     </div>
