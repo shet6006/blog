@@ -5,12 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CalendarDays, MessageCircle, Pencil, Trash2 } from "lucide-react"
 import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
+import { SearchBar } from "@/components/search-bar"
+import { CategoryFilter } from "@/components/category-filter"
 import { CommentSection } from "@/components/comment-section"
 import { LikeButton } from "@/components/like-button"
 import { MarkdownArticle, extractArticleHeadings } from "@/components/markdown-article"
 import { TableOfContents } from "@/components/table-of-contents"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
 import { apiClient, getApiBaseUrl } from "@/lib/api-client"
 import type { Post } from "@/lib/models/post"
 import { normalizePostBody } from "@/lib/post-content"
@@ -21,6 +25,8 @@ export default function PostPage() {
   const router = useRouter()
   const slug = searchParams.get("slug") ?? ""
   const [post, setPost] = useState<Post | null>(null)
+  const [categories, setCategories] = useState<any[]>([])
+  const [stats, setStats] = useState<any>({})
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -43,14 +49,18 @@ export default function PostPage() {
     const fetchData = async () => {
       try {
         if (!slug) throw new Error("missing slug")
-        const [postResult, authResult] = await Promise.allSettled([
+        const [postResult, authResult, categoriesResult, statsResult] = await Promise.allSettled([
           apiClient.getPostBySlug(slug),
           fetch(`${getApiBaseUrl()}/api/auth/check`, { credentials: "include" }).then((response) => response.json()),
+          apiClient.getCategories(),
+          apiClient.getStats(),
         ])
         if (!isMounted) return
         if (postResult.status !== "fulfilled") throw new Error("post request failed")
         setPost(postResult.value as Post)
         if (authResult.status === "fulfilled") setIsAuthenticated(authResult.value?.authenticated === true)
+        if (categoriesResult.status === "fulfilled") setCategories((categoriesResult.value as any[]).map((item) => ({ ...item, postCount: item.post_count ?? 0 })))
+        if (statsResult.status === "fulfilled") setStats(statsResult.value)
       } catch (error) {
         console.error("게시글 조회 실패:", error)
         if (isMounted) setError("게시글을 불러오는데 실패했습니다.")
@@ -102,14 +112,21 @@ export default function PostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-950">
+    <div className="flex min-h-screen flex-col bg-[#f8fafc] text-slate-950">
       <Header />
-      <main className="mx-auto max-w-[1180px] px-5 pb-24 pt-10 md:px-8 md:pt-16">
+      <main className="mx-auto w-full max-w-[1400px] flex-1 px-5 pb-20 pt-10 md:px-8">
         <Link href="/" className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950">
           <ArrowLeft className="h-4 w-4" />글 목록
         </Link>
 
-        <div className="grid gap-12 xl:grid-cols-[minmax(0,780px)_250px] xl:items-start">
+        <div className="grid gap-8 lg:grid-cols-[230px_minmax(0,760px)] xl:grid-cols-[230px_minmax(0,760px)_220px] xl:justify-center xl:items-start">
+          <aside className="order-2 lg:order-none lg:sticky lg:top-24 lg:self-start">
+            <div className="space-y-6">
+              <SearchBar />
+              <CategoryFilter categories={categories} />
+              <Card><CardContent className="p-5"><h3 className="mb-3 font-semibold">블로그 통계</h3><div className="space-y-2 text-sm text-gray-600"><div className="flex justify-between"><span>총 게시글</span><span>{stats?.totalPosts ?? 0}</span></div><div className="flex justify-between"><span>총 좋아요</span><span>{stats?.totalLikes ?? 0}</span></div><div className="flex justify-between"><span>총 댓글</span><span>{stats?.totalComments ?? 0}</span></div></div></CardContent></Card>
+            </div>
+          </aside>
           <article className="min-w-0">
             <header className="mb-12 border-b border-slate-200 pb-10">
               <Badge variant="secondary" className="mb-5 rounded-full bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50">{post.category_name || "미분류"}</Badge>
@@ -135,6 +152,7 @@ export default function PostPage() {
           <aside className="sticky top-24 hidden xl:block"><TableOfContents headings={headings} /></aside>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }
