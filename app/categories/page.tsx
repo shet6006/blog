@@ -9,6 +9,7 @@ import { SearchBar } from "@/components/search-bar"
 import { Button } from "@/components/ui/button"
 import { apiClient } from "@/lib/api-client"
 import { BlogRightRail } from "@/components/blog-right-rail"
+import { PostPagination } from "@/components/post-pagination"
 
 export default function CategoriesPage() {
   const searchParams = useSearchParams()
@@ -66,7 +67,7 @@ export default function CategoriesPage() {
           </aside>
 
           {/* Posts Grid */}
-          <main className="min-w-0">
+          <main id="posts" className="min-w-0 scroll-mt-24">
             <div className="mb-7 flex items-center justify-between border-b border-gray-200 pb-5">
               <h2 className="text-2xl font-semibold tracking-[-0.025em] text-gray-950">
                 {category && category !== "All" ? `${category} 게시글` : "모든 카테고리"}
@@ -100,33 +101,7 @@ export default function CategoriesPage() {
                   ))}
                 </div>
                 {/* Pagination */}
-                {posts.pagination && posts.pagination.totalPages > 1 && (
-                  <div className="flex justify-center mt-12">
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" disabled={posts.pagination.page <= 1}>
-                        이전
-                      </Button>
-                      {Array.from({ length: Math.min(posts.pagination.totalPages, 5) }, (_, i) => i + 1).map(
-                        (pageNum) => (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === posts.pagination.page ? "default" : "outline"}
-                            size="sm"
-                          >
-                            {pageNum}
-                          </Button>
-                        )
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={posts.pagination.page >= posts.pagination.totalPages}
-                      >
-                        다음
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                {posts.pagination && <PostPagination currentPage={posts.pagination.page} totalPages={posts.pagination.totalPages} />}
               </>
             ) : (
               <div className="text-center py-12">

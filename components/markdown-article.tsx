@@ -41,6 +41,38 @@ function createSlugger() {
   }
 }
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  bash: "Bash",
+  shell: "Shell",
+  sh: "Shell",
+  css: "CSS",
+  dockerfile: "Dockerfile",
+  gradle: "Gradle",
+  html: "HTML",
+  java: "Java",
+  javascript: "JavaScript",
+  js: "JavaScript",
+  json: "JSON",
+  kotlin: "Kotlin",
+  markdown: "Markdown",
+  md: "Markdown",
+  nginx: "Nginx",
+  plaintext: "Text",
+  sql: "SQL",
+  ts: "TypeScript",
+  typescript: "TypeScript",
+  xml: "XML",
+  yaml: "YAML",
+  yml: "YAML",
+}
+
+function languageFromChildren(children: ReactNode): string {
+  const codeElement = Children.toArray(children).find((child) => isValidElement<{ className?: string }>(child))
+  if (!isValidElement<{ className?: string }>(codeElement)) return "Text"
+  const language = codeElement.props.className?.match(/(?:lang|language)-([^\s]+)/)?.[1]?.toLowerCase()
+  return language ? (LANGUAGE_NAMES[language] || language.toUpperCase()) : "Text"
+}
+
 export function extractArticleHeadings(markdown: string): ArticleHeading[] {
   const slug = createSlugger()
   const headings: ArticleHeading[] = []
@@ -63,6 +95,7 @@ export function extractArticleHeadings(markdown: string): ArticleHeading[] {
 function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
   const [copied, setCopied] = useState(false)
   const code = textFromChildren(children).replace(/\n$/, "")
+  const language = languageFromChildren(children)
   const copy = async () => {
     await navigator.clipboard.writeText(code)
     setCopied(true)
@@ -71,10 +104,13 @@ function CodeBlock({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
 
   return (
     <div className="code-block group">
-      <button type="button" onClick={copy} className="code-copy" aria-label="코드 복사">
-        {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-        {copied ? "복사됨" : "복사"}
-      </button>
+      <div className="code-toolbar">
+        <span className="code-language">{language}</span>
+        <button type="button" onClick={copy} className="code-copy" aria-label="코드 복사">
+          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "복사됨" : "복사"}
+        </button>
+      </div>
       <pre {...props}>{children}</pre>
     </div>
   )

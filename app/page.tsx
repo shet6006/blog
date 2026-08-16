@@ -7,6 +7,7 @@ import { PostCard } from "@/components/post-card"
 import { CategoryFilter } from "@/components/category-filter"
 import { SearchBar } from "@/components/search-bar"
 import { BlogRightRail } from "@/components/blog-right-rail"
+import { PostPagination } from "@/components/post-pagination"
 
 import { Button } from "@/components/ui/button"
 import { User, Github } from "lucide-react"
@@ -123,33 +124,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 {/* Pagination */}
-                {posts.pagination && posts.pagination.totalPages > 1 && (
-                  <div className="flex justify-center mt-12">
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" disabled={posts.pagination.page <= 1}>
-                        이전
-                      </Button>
-                      {Array.from({ length: Math.min(posts.pagination.totalPages, 5) }, (_, i) => i + 1).map(
-                        (pageNum) => (
-                          <Button
-                            key={pageNum}
-                            variant={pageNum === posts.pagination.page ? "default" : "outline"}
-                            size="sm"
-                          >
-                            {pageNum}
-                          </Button>
-                        ),
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={posts.pagination.page >= posts.pagination.totalPages}
-                      >
-                        다음
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                {posts.pagination && <PostPagination currentPage={posts.pagination.page} totalPages={posts.pagination.totalPages} />}
               </>
             ) : (
               <div className="text-center py-12">

@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import type { ClipboardEvent, MutableRefObject, UIEvent } from "react"
-import { Bold, Code2, Heading2, Italic, Link2, List, Quote } from "lucide-react"
+import { Bold, Braces, Code2, Heading2, Italic, Link2, List, Quote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { MarkdownArticle } from "@/components/markdown-article"
@@ -51,6 +51,21 @@ export function MarkdownEditor({ id = "content", value, onChange, textareaRef, m
     })
   }
 
+  const insertCodeBlock = () => {
+    const textarea = textareaRef.current
+    if (!textarea) return
+    const start = textarea.selectionStart ?? value.length
+    const end = textarea.selectionEnd ?? value.length
+    const selected = value.slice(start, end) || "// 코드를 입력하세요"
+    const block = `\n\n\`\`\`java\n${selected}\n\`\`\`\n\n`
+    onChange(`${value.slice(0, start)}${block}${value.slice(end)}`)
+    requestAnimationFrame(() => {
+      const selectionStart = start + block.indexOf(selected)
+      textarea.focus()
+      textarea.setSelectionRange(selectionStart, selectionStart + selected.length)
+    })
+  }
+
   const syncScroll = (source: "editor" | "preview", event: UIEvent<HTMLElement>) => {
     if (syncingRef.current === source) return
     const sourceElement = event.currentTarget
@@ -82,7 +97,8 @@ export function MarkdownEditor({ id = "content", value, onChange, textareaRef, m
     { label: "인용", icon: Quote, action: () => insertLinePrefix("> ", "인용문") },
     { label: "목록", icon: List, action: () => insertLinePrefix("- ", "목록 항목") },
     { label: "링크", icon: Link2, action: () => replaceSelection("[", "](https://)", "링크 텍스트") },
-    { label: "코드", icon: Code2, action: () => replaceSelection("`", "`", "code") },
+    { label: "인라인 코드", icon: Code2, action: () => replaceSelection("`", "`", "code") },
+    { label: "코드 블록", icon: Braces, action: insertCodeBlock },
   ]
 
   return (
