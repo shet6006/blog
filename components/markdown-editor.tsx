@@ -2,11 +2,10 @@
 
 import { useRef } from "react"
 import type { MutableRefObject, UIEvent } from "react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
 import { Bold, Code2, Heading2, Italic, Link2, List, Quote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { MarkdownArticle } from "@/components/markdown-article"
 
 interface MarkdownEditorProps {
   id?: string
@@ -88,9 +87,7 @@ export function MarkdownEditor({ id = "content", value, onChange, textareaRef, m
           <Textarea id={id} ref={textareaRef} value={value} onChange={(event) => onChange(event.target.value)} onScroll={(event) => syncScroll("editor", event)} placeholder="마크다운으로 글을 작성하세요. 본문은 ## 소제목부터 시작하면 읽기 좋습니다." required={required} spellCheck className="h-full min-h-[inherit] resize-none rounded-none border-0 bg-transparent p-6 font-mono text-[15px] leading-7 shadow-none focus-visible:ring-0" style={{ minHeight }} />
         </div>
         <div ref={previewRef} onScroll={(event) => syncScroll("preview", event)} className="markdown-preview overflow-y-auto p-6 md:p-8" style={{ height: minHeight }}>
-          <div className="prose prose-slate prose-lg max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{value || "*여기에 미리보기가 표시됩니다.*"}</ReactMarkdown>
-          </div>
+          <MarkdownArticle content={value || "*여기에 미리보기가 표시됩니다.*"} />
         </div>
       </div>
 
