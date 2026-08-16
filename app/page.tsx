@@ -6,7 +6,6 @@ import { Header } from "@/components/header"
 import { PostCard } from "@/components/post-card"
 import { CategoryFilter } from "@/components/category-filter"
 import { SearchBar } from "@/components/search-bar"
-import { Footer } from "@/components/footer"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -58,15 +57,15 @@ export default function HomePage() {
   }, [category, search, page, sortBy]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Header />
 
       {/* Hero Section */}
       <section className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="max-w-7xl mx-auto px-4 py-16">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">개발자 블로그</h1>
-            <p className="text-base text-gray-600 mb-5 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               {profile?.bio || ""}
             </p>
             <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
@@ -87,7 +86,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar */}
-          <aside className="order-2 lg:order-none lg:col-span-1">
+          <aside className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
               <SearchBar />
               <CategoryFilter categories={categories} />
@@ -120,7 +119,7 @@ export default function HomePage() {
           </aside>
 
           {/* Posts Grid */}
-          <main className="order-1 lg:order-none lg:col-span-3">
+          <main className="lg:col-span-3">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
                 {category && category !== "All" ? `${category} 게시글` : "최근 게시글"}
@@ -146,7 +145,7 @@ export default function HomePage() {
 
             {Array.isArray(posts.posts) && posts.posts.length > 0 ? (
               <>
-                <div>
+                <div className="grid gap-6">
                   {posts.posts.map((post: any) => (
                     <PostCard key={post.id} post={post} />
                   ))}
@@ -190,7 +189,6 @@ export default function HomePage() {
           </main>
         </div>
       </div>
-      <Footer />
     </div>
   )
 }

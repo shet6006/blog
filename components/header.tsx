@@ -12,18 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X, Github, Settings, LogOut, PenTool, Search } from "lucide-react"
+import { Menu, X, Github, Settings, LogOut, PenTool } from "lucide-react"
 import { toast } from "sonner"
 import { LoginModal } from "./login-modal"
 import { Profile } from "@/lib/profile"
 import { getApiBaseUrl } from "@/lib/api-client"
-import { Input } from "@/components/ui/input"
 
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<{ id: string; username: string } | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -93,14 +90,6 @@ export function Header() {
     }
   }
 
-  const handleSearch = (event: React.FormEvent) => {
-    event.preventDefault()
-    const query = searchQuery.trim()
-    router.push(query ? `/?search=${encodeURIComponent(query)}` : "/")
-    setIsSearchOpen(false)
-    setIsMenuOpen(false)
-  }
-
   const handleLogout = async () => {
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/auth/logout`, {
@@ -144,11 +133,13 @@ export function Header() {
               <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors">
                 소개
               </Link>
+              <Link href="/api-docs" className="text-gray-700 hover:text-blue-600 transition-colors">
+                API 문서
+              </Link>
             </nav>
 
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={() => setIsSearchOpen((open) => !open)} aria-label="검색"><Search className="h-4 w-4" /></Button>
               {isLoggedIn ? (
                 <div className="flex items-center space-x-3">
                   <Button variant="outline" size="sm" asChild>
@@ -198,23 +189,10 @@ export function Header() {
             </button>
           </div>
 
-          {isSearchOpen && (
-            <form onSubmit={handleSearch} className="hidden border-t py-3 md:flex">
-              <div className="relative ml-auto w-full max-w-sm">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input autoFocus value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="게시글 검색..." className="pl-9" />
-              </div>
-            </form>
-          )}
-
           {/* Mobile Menu */}
           {isMenuOpen && (
             <div className="md:hidden border-t bg-white">
               <nav className="py-4 space-y-2">
-                <form onSubmit={handleSearch} className="flex gap-2 px-4 pb-3">
-                  <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="게시글 검색..." />
-                  <Button type="submit" size="sm" variant="outline"><Search className="h-4 w-4" /></Button>
-                </form>
                 <Link
                   href="/"
                   className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
