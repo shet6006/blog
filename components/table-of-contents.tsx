@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import type { MouseEvent } from "react"
 import type { ArticleHeading } from "@/components/markdown-article"
 import { cn } from "@/lib/utils"
 
@@ -22,13 +23,22 @@ export function TableOfContents({ headings }: { headings: ArticleHeading[] }) {
 
   if (headings.length === 0) return null
 
+  const moveToHeading = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    event.preventDefault()
+    const heading = document.getElementById(id)
+    if (!heading) return
+    heading.scrollIntoView({ behavior: "smooth", block: "start" })
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}#${id}`)
+    heading.focus({ preventScroll: true })
+  }
+
   return (
     <nav aria-label="글 목차">
       <p className="mb-3 text-sm font-semibold tracking-tight text-slate-950">목차</p>
       <ol className="border-t border-slate-200">
         {headings.map((heading) => (
           <li key={heading.id}>
-            <a href={`#${heading.id}`} className={cn("block border-b border-slate-100 py-3 text-sm leading-5 transition-colors", heading.level === 3 ? "pl-4" : "pl-0", activeId === heading.id ? "font-semibold text-blue-600" : "text-slate-500 hover:text-slate-900")}>
+            <a href={`#${heading.id}`} onClick={(event) => moveToHeading(event, heading.id)} className={cn("block border-b border-slate-100 py-3 text-sm leading-5 transition-colors", heading.level === 3 ? "pl-4" : "pl-0", activeId === heading.id ? "font-semibold text-blue-600" : "text-slate-500 hover:text-slate-900")}>
               {heading.text}
             </a>
           </li>
