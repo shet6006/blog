@@ -13,9 +13,7 @@ import { ArrowLeft, Save, Image as ImageIcon } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { getApiBaseUrl } from "@/lib/api-client"
-import { Textarea } from "@/components/ui/textarea"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import { MarkdownEditor } from "@/components/markdown-editor"
 
 interface Category {
   id: number
@@ -83,7 +81,6 @@ export default function WritePage() {
 
   const handleSave = async () => {
     try {
-      // 제목을 H1 태그로 변환하여 content 앞에 추가
       const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
         headers: {
@@ -114,7 +111,6 @@ export default function WritePage() {
 
   const handlePublish = async () => {
     try {
-      // 제목을 H1 태그로 변환하여 content 앞에 추가
       const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
         headers: {
@@ -258,14 +254,14 @@ export default function WritePage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title">제목 (H1 태그로 저장됩니다)</Label>
+                  <Label htmlFor="title">제목</Label>
                   <Input
                     id="title"
                     placeholder="게시글 제목을 입력하세요"
                     value={post.title}
                     onChange={(e) => handleTitleChange(e.target.value)}
                   />
-                  <p className="text-sm text-gray-500">제목은 자동으로 H1 태그(# 제목)로 저장됩니다.</p>
+                  <p className="text-sm text-gray-500">제목과 본문은 따로 저장됩니다. 본문은 ## 소제목부터 작성하세요.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -302,25 +298,11 @@ export default function WritePage() {
                       </Button>
                     </div>
                   </div>
-                  <div className="border rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
-                    <div className="grid grid-cols-2 h-[600px]">
-                      <div className="border-r">
-                        <Textarea
-                          id="content"
-                          placeholder="마크다운으로 게시글을 작성하세요..."
-                          value={post.content}
-                          onChange={(e) => setPost({ ...post, content: e.target.value })}
-                          ref={textareaRef}
-                          className="h-full font-mono border-0 rounded-none resize-none"
-                        />
-                      </div>
-                      <div className="overflow-auto p-6 prose prose-lg max-w-none">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {post.content || "*내용을 입력하세요...*"}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  </div>
+                  <MarkdownEditor
+                    value={post.content}
+                    onChange={(content) => setPost({ ...post, content })}
+                    textareaRef={textareaRef}
+                  />
                 </div>
               </CardContent>
             </Card>
