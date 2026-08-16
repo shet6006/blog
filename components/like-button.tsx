@@ -11,9 +11,10 @@ interface LikeButtonProps {
   postSlug: string
   initialCount?: number
   initialLiked?: boolean
+  onCountChange?: (count: number) => void
 }
 
-export function LikeButton({ postSlug, initialCount = 0, initialLiked = false }: LikeButtonProps) {
+export function LikeButton({ postSlug, initialCount = 0, initialLiked = false, onCountChange }: LikeButtonProps) {
   const [count, setCount] = useState(initialCount)
   const [liked, setLiked] = useState(initialLiked)
   const [isLoading, setIsLoading] = useState(false)
@@ -26,13 +27,14 @@ export function LikeButton({ postSlug, initialCount = 0, initialLiked = false }:
         const response = await apiClient.getLikeStatus(postSlug, deviceId) as { liked: boolean; count: number }
         setCount(response.count)
         setLiked(response.liked)
+        onCountChange?.(response.count)
       } catch (error) {
         console.error("좋아요 상태 조회 실패:", error)
       }
     }
 
     fetchLikeStatus()
-  }, [postSlug, deviceId])
+  }, [postSlug, deviceId, onCountChange])
 
   const handleLike = async () => {
     if (isLoading) return
@@ -42,6 +44,7 @@ export function LikeButton({ postSlug, initialCount = 0, initialLiked = false }:
       const response = await apiClient.toggleLike(postSlug, deviceId) as { liked: boolean; count: number }
       setLiked(response.liked)
       setCount(response.count)
+      onCountChange?.(response.count)
       toast({
         title: response.liked ? "좋아요를 눌렀습니다." : "좋아요를 취소했습니다.",
       })
@@ -59,13 +62,14 @@ export function LikeButton({ postSlug, initialCount = 0, initialLiked = false }:
   return (
     <Button
       variant={liked ? "default" : "outline"}
-      size="sm"
       onClick={handleLike}
       disabled={isLoading}
-      className={liked ? "bg-red-500 hover:bg-red-600" : "text-gray-500 hover:text-red-500"}
+      className={liked
+        ? "h-11 rounded-full bg-blue-600 px-6 text-white hover:bg-blue-700"
+        : "h-11 rounded-full border-gray-300 px-6 text-gray-600 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-600"}
     >
-      <Heart className={`w-4 h-4 mr-2 ${liked ? "fill-current" : ""}`} />
-      {count}
+      <Heart className={`mr-2 h-4 w-4 ${liked ? "fill-current" : ""}`} />
+      좋아요 {count}
     </Button>
   )
 }

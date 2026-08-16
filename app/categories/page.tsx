@@ -6,9 +6,9 @@ import { Header } from "@/components/header"
 import { PostCard } from "@/components/post-card"
 import { CategoryFilter } from "@/components/category-filter"
 import { SearchBar } from "@/components/search-bar"
-import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { apiClient } from "@/lib/api-client"
+import { BlogRightRail } from "@/components/blog-right-rail"
 
 export default function CategoriesPage() {
   const searchParams = useSearchParams()
@@ -18,6 +18,8 @@ export default function CategoriesPage() {
 
   const [posts, setPosts] = useState<any>({ posts: [], pagination: null })
   const [categories, setCategories] = useState<any[]>([])
+  const [popularPosts, setPopularPosts] = useState<any[]>([])
+  const [stats, setStats] = useState<any>({})
   const [sortBy, setSortBy] = useState<"latest" | "popular">("latest")
 
   useEffect(() => {
@@ -29,6 +31,9 @@ export default function CategoriesPage() {
           .catch(() => ({ posts: [], pagination: null }))
         setPosts(postsData as any)
 
+        const popularData = await apiClient.getPosts({ page: 1, limit: 4, sortBy: "likes" }).catch(() => ({ posts: [] }))
+        setPopularPosts(Array.isArray((popularData as any).posts) ? (popularData as any).posts : [])
+
         const categoriesData = await apiClient.getCategories().catch(() => [])
         setCategories(
           (categoriesData as any[]).map((cat) => ({
@@ -36,6 +41,8 @@ export default function CategoriesPage() {
             postCount: cat.post_count ?? 0,
           }))
         )
+
+        setStats(await apiClient.getStats().catch(() => ({})))
       } catch (error) {
         console.error("Error loading data:", error)
       }
@@ -45,30 +52,31 @@ export default function CategoriesPage() {
   }, [category, search, page, sortBy])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="mx-auto max-w-[1480px] px-5 py-12 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,860px)_210px] xl:justify-between xl:gap-12">
           {/* Sidebar */}
-          <aside className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
+          <aside>
+            <div className="sticky top-24 space-y-10">
               <SearchBar />
-              <CategoryFilter categories={categories} />
+              <CategoryFilter categories={categories} basePath="/categories" />
             </div>
           </aside>
 
           {/* Posts Grid */}
-          <main className="lg:col-span-3">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-3xl font-bold text-gray-900">
+          <main className="min-w-0">
+            <div className="mb-7 flex items-center justify-between border-b border-gray-200 pb-5">
+              <h2 className="text-2xl font-semibold tracking-[-0.025em] text-gray-950">
                 {category && category !== "All" ? `${category} 게시글` : "모든 카테고리"}
                 {search && ` - "${search}" 검색 결과`}
-              </h1>
+              </h2>
               <div className="flex items-center gap-2">
                 <Button
                   variant={sortBy === "latest" ? "default" : "outline"}
                   size="sm"
+                  className={sortBy === "latest" ? "bg-blue-600 hover:bg-blue-700" : ""}
                   onClick={() => setSortBy("latest")}
                 >
                   최신순
@@ -76,6 +84,7 @@ export default function CategoriesPage() {
                 <Button
                   variant={sortBy === "popular" ? "default" : "outline"}
                   size="sm"
+                  className={sortBy === "popular" ? "bg-blue-600 hover:bg-blue-700" : ""}
                   onClick={() => setSortBy("popular")}
                 >
                   인기순
@@ -85,7 +94,7 @@ export default function CategoriesPage() {
 
             {Array.isArray(posts.posts) && posts.posts.length > 0 ? (
               <>
-                <div className="grid gap-6">
+                <div className="grid gap-7">
                   {posts.posts.map((post: any) => (
                     <PostCard key={post.id} post={post} />
                   ))}
@@ -127,9 +136,14 @@ export default function CategoriesPage() {
               </div>
             )}
           </main>
+
+          <aside className="hidden xl:block">
+            <div className="sticky top-24">
+              <BlogRightRail popularPosts={popularPosts} stats={stats} />
+            </div>
+          </aside>
         </div>
       </div>
     </div>
   )
 }
-

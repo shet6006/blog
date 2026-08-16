@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Menu, X, Github, Settings, LogOut, PenTool } from "lucide-react"
+import { Menu, X, Github, Settings, LogOut, PenTool, Search } from "lucide-react"
 import { toast } from "sonner"
 import { LoginModal } from "./login-modal"
 import { Profile } from "@/lib/profile"
@@ -25,6 +25,7 @@ export function Header() {
   const [user, setUser] = useState<{ id: string; username: string } | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
 
   useEffect(() => {
@@ -109,40 +110,60 @@ export function Header() {
     }
   }
 
+  const handleSearch = (event: FormEvent) => {
+    event.preventDefault()
+    const query = searchQuery.trim()
+    router.push(query ? `/?search=${encodeURIComponent(query)}` : "/")
+    setIsMenuOpen(false)
+  }
+
   return (
     <>
-      <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-blue-700 bg-blue-600">
+        <div className="mx-auto max-w-[1480px] px-5 lg:px-8">
+          <div className="relative flex h-16 items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">D</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white">
+                <span className="text-sm font-bold text-blue-600">D</span>
               </div>
-              <span className="font-bold text-xl text-gray-900">DDONG's</span>
+              <span className="text-xl font-bold text-white">DDONG's</span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors">
+            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
+              <Link href="/" className="text-blue-100 transition-colors hover:text-white">
                 홈
               </Link>
-              <Link href="/categories" className="text-gray-700 hover:text-blue-600 transition-colors">
+              <span aria-hidden="true" className="text-blue-200/60">·</span>
+              <Link href="/categories" className="text-blue-100 transition-colors hover:text-white">
                 카테고리
               </Link>
-              <Link href="/about" className="text-gray-700 hover:text-blue-600 transition-colors">
-                소개
+              <span aria-hidden="true" className="text-blue-200/60">·</span>
+              <Link href="/portfolio" className="text-blue-100 transition-colors hover:text-white">
+                포트폴리오
               </Link>
-              <Link href="/api-docs" className="text-gray-700 hover:text-blue-600 transition-colors">
-                API 문서
+              <span aria-hidden="true" className="text-blue-200/60">·</span>
+              <Link href="/about" className="text-blue-100 transition-colors hover:text-white">
+                소개
               </Link>
             </nav>
 
             {/* Desktop Actions */}
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden items-center space-x-3 md:flex">
+              <form onSubmit={handleSearch} className="hidden h-9 items-center rounded-md border border-white/30 bg-white/10 px-3 lg:flex">
+                <Search className="h-4 w-4 shrink-0 text-blue-100" />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  aria-label="게시글 검색"
+                  placeholder="검색"
+                  className="w-28 bg-transparent px-2 text-sm text-white outline-none placeholder:text-blue-100/80 xl:w-36"
+                />
+              </form>
               {isLoggedIn ? (
                 <div className="flex items-center space-x-3">
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size="sm" className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" asChild>
                     <Link href="/admin/write">
                       <PenTool className="w-4 h-4 mr-2" />
                       글쓰기
@@ -151,7 +172,10 @@ export function Header() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Avatar className="cursor-pointer">
-                        <AvatarImage src={profile?.avatar_url || "/placeholder.png?height=32&width=32"} />
+                        <AvatarImage
+                          src={profile?.avatar_url || "/default-profile.svg"}
+                          alt={profile?.name ? `${profile.name} 프로필` : "기본 프로필"}
+                        />
                         <AvatarFallback>{profile?.name?.[0] || user?.username?.[0] || "U"}</AvatarFallback>
                       </Avatar>
                     </DropdownMenuTrigger>
@@ -177,72 +201,82 @@ export function Header() {
                   </DropdownMenu>
                 </div>
               ) : (
-                <Button onClick={() => setIsLoginModalOpen(true)} size="sm">
+                <Button onClick={() => setIsLoginModalOpen(true)} size="sm" className="bg-white text-blue-700 hover:bg-blue-50">
                   로그인
                 </Button>
               )}
             </div>
 
             {/* Mobile Menu Button */}
-            <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <button className="p-2 text-white md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
 
           {/* Mobile Menu */}
           {isMenuOpen && (
-            <div className="md:hidden border-t bg-white">
+            <div className="border-t border-blue-500 bg-blue-600 md:hidden">
               <nav className="py-4 space-y-2">
+                <form onSubmit={handleSearch} className="mx-4 mb-4 flex h-10 items-center rounded-md border border-white/30 bg-white/10 px-3">
+                  <Search className="h-4 w-4 text-blue-100" />
+                  <input
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    aria-label="게시글 검색"
+                    placeholder="게시글 검색"
+                    className="min-w-0 flex-1 bg-transparent px-2 text-sm text-white outline-none placeholder:text-blue-100/80"
+                  />
+                </form>
                 <Link
                   href="/"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  className="block px-4 py-2 text-blue-50 hover:bg-white/10"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   홈
                 </Link>
                 <Link
                   href="/categories"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  className="block px-4 py-2 text-blue-50 hover:bg-white/10"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   카테고리
                 </Link>
                 <Link
+                  href="/portfolio"
+                  className="block px-4 py-2 text-blue-50 hover:bg-white/10"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  포트폴리오
+                </Link>
+                <Link
                   href="/about"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
+                  className="block px-4 py-2 text-blue-50 hover:bg-white/10"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   소개
                 </Link>
-                <Link
-                  href="/api-docs"
-                  className="block px-4 py-2 text-gray-700 hover:bg-gray-50"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  API 문서
-                </Link>
                 <div className="px-4 py-2">
                   {isLoggedIn ? (
                     <div className="space-y-2">
-                      <Button variant="outline" size="sm" className="w-full" asChild>
+                      <Button variant="outline" size="sm" className="w-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" asChild>
                         <Link href="/admin/write">
                           <PenTool className="w-4 h-4 mr-2" />
                           글쓰기
                         </Link>
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full" asChild>
+                      <Button variant="outline" size="sm" className="w-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" asChild>
                         <Link href="/admin/dashboard">
                           <Settings className="w-4 h-4 mr-2" />
                           관리자 대시보드
                         </Link>
                       </Button>
-                      <Button variant="outline" size="sm" className="w-full" onClick={handleLogout}>
+                      <Button variant="outline" size="sm" className="w-full border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white" onClick={handleLogout}>
                         <LogOut className="w-4 h-4 mr-2" />
                         로그아웃
                       </Button>
                     </div>
                   ) : (
-                    <Button onClick={() => setIsLoginModalOpen(true)} size="sm" className="w-full">
+                    <Button onClick={() => setIsLoginModalOpen(true)} size="sm" className="w-full bg-white text-blue-700 hover:bg-blue-50">
                       <Github className="w-4 h-4 mr-2" />
                       GitHub 로그인
                     </Button>
@@ -253,6 +287,8 @@ export function Header() {
           )}
         </div>
       </header>
+
+      <div aria-hidden="true" className="h-16" />
 
       <LoginModal
         isOpen={isLoginModalOpen}

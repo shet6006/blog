@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, CalendarDays, MessageCircle, Pencil, Trash2 } from "lucide-react"
+import { ArrowLeft, CalendarDays, Heart, MessageCircle, Pencil, Trash2 } from "lucide-react"
 import { Header } from "@/components/header"
 import { CommentSection } from "@/components/comment-section"
 import { LikeButton } from "@/components/like-button"
 import { MarkdownArticle, extractArticleHeadings } from "@/components/markdown-article"
 import { TableOfContents } from "@/components/table-of-contents"
+import { SearchBar } from "@/components/search-bar"
+import { CategoryFilter } from "@/components/category-filter"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { apiClient, getApiBaseUrl } from "@/lib/api-client"
@@ -24,6 +26,8 @@ export default function PostPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [categories, setCategories] = useState<any[]>([])
+  const [likeCount, setLikeCount] = useState(0)
 
   useEffect(() => {
     const handleCommentUpdate = async () => {
@@ -43,14 +47,22 @@ export default function PostPage() {
     const fetchData = async () => {
       try {
         if (!slug) throw new Error("missing slug")
-        const [postResult, authResult] = await Promise.allSettled([
+        const [postResult, authResult, categoriesResult] = await Promise.allSettled([
           apiClient.getPostBySlug(slug),
           fetch(`${getApiBaseUrl()}/api/auth/check`, { credentials: "include" }).then((response) => response.json()),
+          apiClient.getCategories(),
         ])
         if (!isMounted) return
         if (postResult.status !== "fulfilled") throw new Error("post request failed")
         setPost(postResult.value as Post)
+        setLikeCount((postResult.value as Post).likes_count ?? 0)
         if (authResult.status === "fulfilled") setIsAuthenticated(authResult.value?.authenticated === true)
+        if (categoriesResult.status === "fulfilled") {
+          setCategories((categoriesResult.value as any[]).map((category) => ({
+            ...category,
+            postCount: category.post_count ?? 0,
+          })))
+        }
       } catch (error) {
         console.error("게시글 조회 실패:", error)
         if (isMounted) setError("게시글을 불러오는데 실패했습니다.")
@@ -77,7 +89,7 @@ export default function PostPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc]">
+      <div className="min-h-screen bg-white">
         <Header />
         <div className="mx-auto max-w-3xl animate-pulse px-5 py-20">
           <div className="mb-6 h-4 w-24 rounded bg-slate-200" />
@@ -91,7 +103,7 @@ export default function PostPage() {
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-[#f8fafc]">
+      <div className="min-h-screen bg-white">
         <Header />
         <div className="mx-auto max-w-2xl px-5 py-24 text-center">
           <h1 className="mb-6 text-2xl font-bold text-slate-900">{error || "게시글을 찾을 수 없습니다."}</h1>
@@ -102,22 +114,29 @@ export default function PostPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-950">
+    <div className="min-h-screen bg-white text-slate-950">
       <Header />
-      <main className="mx-auto max-w-[1180px] px-5 pb-24 pt-10 md:px-8 md:pt-16">
+      <main className="mx-auto max-w-[1480px] px-5 pb-24 pt-10 lg:px-8 lg:pt-14">
         <Link href="/" className="mb-10 inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950">
           <ArrowLeft className="h-4 w-4" />글 목록
         </Link>
 
-        <div className="grid gap-12 xl:grid-cols-[minmax(0,780px)_250px] xl:items-start">
+        <div className="grid gap-10 lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,860px)_210px] xl:justify-between xl:gap-12 xl:items-start">
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-10">
+              <SearchBar />
+              <CategoryFilter categories={categories} />
+            </div>
+          </aside>
+
           <article className="min-w-0">
             <header className="mb-12 border-b border-slate-200 pb-10">
-              <Badge variant="secondary" className="mb-5 rounded-full bg-blue-50 px-3 py-1 text-blue-700 hover:bg-blue-50">{post.category_name || "미분류"}</Badge>
-              <h1 className="text-balance text-4xl font-extrabold leading-[1.18] tracking-[-0.035em] text-slate-950 md:text-5xl">{post.title}</h1>
+              <Badge variant="secondary" className="mb-5 rounded-none bg-transparent px-0 text-gray-700 hover:bg-transparent">{post.category_name || "미분류"}</Badge>
+              <h1 className="text-balance text-4xl font-semibold leading-[1.18] tracking-[-0.04em] text-slate-950 md:text-5xl">{post.title}</h1>
               <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm text-slate-500">
                 <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4" />{new Date(post.created_at).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}</span>
                 <span className="inline-flex items-center gap-1.5"><MessageCircle className="h-4 w-4" />댓글 {post.comments_count}</span>
-                <LikeButton postSlug={post.slug} />
+                <span className="inline-flex items-center gap-1.5"><Heart className="h-4 w-4" />좋아요 {likeCount}</span>
               </div>
               {isAuthenticated && (
                 <div className="mt-6 flex gap-2">
@@ -129,7 +148,11 @@ export default function PostPage() {
 
             <div className="mb-8 xl:hidden"><TableOfContents headings={headings} /></div>
             <MarkdownArticle content={body} />
-            <div className="mt-16 border-t border-slate-200 pt-10"><CommentSection postSlug={post.slug} /></div>
+            <div className="mt-16 flex flex-col items-center border-y border-slate-200 py-10 text-center">
+              <p className="mb-4 text-sm text-gray-500">이 글이 도움이 되었나요?</p>
+              <LikeButton postSlug={post.slug} initialCount={likeCount} onCountChange={setLikeCount} />
+            </div>
+            <div className="mt-14"><CommentSection postSlug={post.slug} /></div>
           </article>
 
           <aside className="sticky top-24 hidden xl:block"><TableOfContents headings={headings} /></aside>

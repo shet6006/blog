@@ -1,7 +1,7 @@
 "use client"
 
 import { useRef } from "react"
-import type { MutableRefObject, UIEvent } from "react"
+import type { ClipboardEvent, MutableRefObject, UIEvent } from "react"
 import { Bold, Code2, Heading2, Italic, Link2, List, Quote } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -14,9 +14,11 @@ interface MarkdownEditorProps {
   textareaRef: MutableRefObject<HTMLTextAreaElement | null>
   minHeight?: number
   required?: boolean
+  onPasteImages?: (files: File[]) => void | Promise<void>
+  isUploadingImage?: boolean
 }
 
-export function MarkdownEditor({ id = "content", value, onChange, textareaRef, minHeight = 640, required }: MarkdownEditorProps) {
+export function MarkdownEditor({ id = "content", value, onChange, textareaRef, minHeight = 640, required, onPasteImages, isUploadingImage }: MarkdownEditorProps) {
   const previewRef = useRef<HTMLDivElement | null>(null)
   const syncingRef = useRef<"editor" | "preview" | null>(null)
 
@@ -62,6 +64,17 @@ export function MarkdownEditor({ id = "content", value, onChange, textareaRef, m
     requestAnimationFrame(() => { syncingRef.current = null })
   }
 
+  const handlePaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const images = Array.from(event.clipboardData.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null)
+
+    if (images.length === 0 || !onPasteImages) return
+    event.preventDefault()
+    void onPasteImages(images)
+  }
+
   const toolbar = [
     { label: "소제목", icon: Heading2, action: () => insertLinePrefix("## ", "소제목") },
     { label: "굵게", icon: Bold, action: () => replaceSelection("**", "**") },
@@ -84,7 +97,7 @@ export function MarkdownEditor({ id = "content", value, onChange, textareaRef, m
 
       <div className="grid md:grid-cols-2" style={{ minHeight }}>
         <div className="border-b border-slate-200 md:border-b-0 md:border-r">
-          <Textarea id={id} ref={textareaRef} value={value} onChange={(event) => onChange(event.target.value)} onScroll={(event) => syncScroll("editor", event)} placeholder="마크다운으로 글을 작성하세요. 본문은 ## 소제목부터 시작하면 읽기 좋습니다." required={required} spellCheck className="h-full min-h-[inherit] resize-none rounded-none border-0 bg-transparent p-6 font-mono text-[15px] leading-7 shadow-none focus-visible:ring-0" style={{ minHeight }} />
+          <Textarea id={id} ref={textareaRef} value={value} onChange={(event) => onChange(event.target.value)} onPaste={handlePaste} onScroll={(event) => syncScroll("editor", event)} placeholder="마크다운으로 글을 작성하세요. 본문은 ## 소제목부터 시작하면 읽기 좋습니다." required={required} spellCheck className="h-full min-h-[inherit] resize-none rounded-none border-0 bg-transparent p-6 font-mono text-[15px] leading-7 shadow-none focus-visible:ring-0" style={{ minHeight }} />
         </div>
         <div ref={previewRef} onScroll={(event) => syncScroll("preview", event)} className="markdown-preview overflow-y-auto p-6 md:p-8" style={{ height: minHeight }}>
           <MarkdownArticle content={value || "*여기에 미리보기가 표시됩니다.*"} />
@@ -92,7 +105,7 @@ export function MarkdownEditor({ id = "content", value, onChange, textareaRef, m
       </div>
 
       <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50/70 px-4 py-2 text-xs text-slate-500">
-        <span>양쪽 스크롤이 함께 움직입니다.</span>
+        <span>{isUploadingImage ? "이미지를 업로드하고 있습니다..." : "이미지는 파일 선택 또는 ⌘/Ctrl+V로 붙여넣을 수 있습니다."}</span>
         <span>{value.length.toLocaleString("ko-KR")}자</span>
       </div>
     </div>

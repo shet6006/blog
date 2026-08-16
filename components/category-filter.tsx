@@ -11,9 +11,10 @@ interface Category {
 
 interface CategoryFilterProps {
   categories: Category[]
+  basePath?: string
 }
 
-export function CategoryFilter({ categories }: CategoryFilterProps) {
+export function CategoryFilter({ categories, basePath = "/" }: CategoryFilterProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedCategory = searchParams.get("category") || "All"
@@ -26,19 +27,19 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
       params.set("category", categoryName)
     }
     params.set("page", "1") // 카테고리 변경 시 첫 페이지로
-    router.push(`/?${params.toString()}`)
+    router.push(`${basePath}?${params.toString()}`)
   }
 
   return (
     <div className="space-y-3">
-      <h3 className="font-semibold text-gray-900">카테고리</h3>
-      <div className="space-y-2">
+      <h3 className="text-sm font-semibold tracking-tight text-gray-950">카테고리</h3>
+      <div className="border-t border-gray-200">
         <button
           onClick={() => handleCategoryClick("All")}
-          className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+          className={`block w-full border-b border-gray-100 px-0 py-3 text-left text-sm transition-colors ${
             selectedCategory === "All"
-              ? "bg-blue-100 text-blue-700"
-              : "text-gray-600 hover:bg-gray-100"
+              ? "border-b-blue-600 font-semibold text-blue-600"
+              : "text-gray-500 hover:text-gray-950"
           }`}
         >
           전체
@@ -47,14 +48,14 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
           <button
             key={category.id}
             onClick={() => handleCategoryClick(category.name)}
-            className={`block w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+            className={`flex w-full items-center justify-between border-b border-gray-100 px-0 py-3 text-left text-sm transition-colors ${
               selectedCategory === category.name
-                ? "bg-blue-100 text-blue-700"
-                : "text-gray-600 hover:bg-gray-100"
+                ? "border-b-blue-600 font-semibold text-blue-600"
+                : "text-gray-500 hover:text-gray-950"
             }`}
           >
             {category.name}
-            <Badge variant="secondary" className="ml-2 text-xs">
+            <Badge variant="secondary" className="ml-2 rounded-full bg-gray-100 text-xs font-normal text-gray-500">
               {category.postCount}
             </Badge>
           </button>

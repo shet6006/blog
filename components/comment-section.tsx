@@ -1,11 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { MessageCircle, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { apiClient, getApiBaseUrl } from "@/lib/api-client"
@@ -20,36 +18,16 @@ interface Comment {
   device_id: string
 }
 
-interface CommentSectionProps {
-  postSlug: string
-}
-
-export function CommentSection({ postSlug }: CommentSectionProps) {
+export function CommentSection({ postSlug }: { postSlug: string }) {
   const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
   const [authorName, setAuthorName] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [deviceId, setDeviceId] = useState("")
 
-  useEffect(() => {
-    // 디바이스 ID 생성 또는 가져오기
-    const storedDeviceId = localStorage.getItem("deviceId")
-    if (storedDeviceId) {
-      setDeviceId(storedDeviceId)
-    } else {
-      const newDeviceId = Math.random().toString(36).substring(2)
-      localStorage.setItem("deviceId", newDeviceId)
-      setDeviceId(newDeviceId)
-    }
-
-    // 댓글 로드
-    loadComments()
-  }, [postSlug])
-
   const loadComments = async () => {
     try {
-      const data = await apiClient.getComments(postSlug)
-      setComments(data as Comment[])
+      setComments(await apiClient.getComments(postSlug) as Comment[])
     } catch (error) {
       console.error("댓글 로딩 중 오류:", error)
       toast.error("댓글을 불러오는데 실패했습니다.")
@@ -58,24 +36,30 @@ export function CommentSection({ postSlug }: CommentSectionProps) {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  useEffect(() => {
+    const storedDeviceId = localStorage.getItem("deviceId")
+    if (storedDeviceId) {
+      setDeviceId(storedDeviceId)
+    } else {
+      const newDeviceId = Math.random().toString(36).substring(2)
+      localStorage.setItem("deviceId", newDeviceId)
+      setDeviceId(newDeviceId)
+    }
+    loadComments()
+  }, [postSlug])
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault()
     if (!newComment.trim() || !authorName.trim()) {
       toast.error("이름과 댓글 내용을 모두 입력해주세요.")
       return
     }
 
     try {
-      await apiClient.createComment(postSlug, {
-        authorName,
-        content: newComment,
-        deviceId,
-      })
+      await apiClient.createComment(postSlug, { authorName, content: newComment, deviceId })
       toast.success("댓글이 등록되었습니다.")
       setNewComment("")
-      // 댓글 목록만 다시 로드 (페이지 새로고침 없이)
       await loadComments()
-      // 댓글 개수 업데이트를 위한 이벤트 발생 (부모 컴포넌트에서 처리)
       window.dispatchEvent(new CustomEvent("commentUpdated"))
     } catch (error) {
       console.error("댓글 등록 중 오류:", error)
@@ -91,96 +75,84 @@ export function CommentSection({ postSlug }: CommentSectionProps) {
         credentials: "include",
         body: JSON.stringify({ commentId }),
       })
-      
-      if (response.ok) {
-        toast.success("댓글이 삭제되었습니다.")
-        // 댓글 목록만 다시 로드 (페이지 새로고침 없이)
-        await loadComments()
-        // 댓글 개수 업데이트를 위한 이벤트 발생
-        window.dispatchEvent(new CustomEvent("commentUpdated"))
-      } else {
+      if (!response.ok) {
         const data = await response.json()
         toast.error(data.error || "댓글 삭제에 실패했습니다.")
+        return
       }
+      toast.success("댓글이 삭제되었습니다.")
+      await loadComments()
+      window.dispatchEvent(new CustomEvent("commentUpdated"))
     } catch (error) {
       console.error("댓글 삭제 중 오류:", error)
       toast.error("댓글 삭제 중 오류가 발생했습니다.")
     }
   }
 
-  if (isLoading) {
-    return <div className="text-center py-4">댓글을 불러오는 중...</div>
-  }
+  if (isLoading) return <div className="py-8 text-sm text-gray-400">댓글을 불러오는 중...</div>
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <MessageCircle className="w-5 h-5" />
-          댓글 {comments.length}개
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* 댓글 작성 폼 */}
-        <form onSubmit={handleSubmit} className="space-y-4 mb-8">
-          <div className="space-y-2">
-            <Label htmlFor="author">이름</Label>
-            <Input
-              id="author"
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="이름을 입력하세요"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="comment">댓글</Label>
-            <Textarea
-              id="comment"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="댓글을 입력하세요"
-              rows={3}
-            />
-          </div>
-          <Button type="submit">댓글 작성</Button>
-        </form>
+    <section aria-labelledby="comments-heading">
+      <div className="mb-8 flex items-center gap-2">
+        <MessageCircle className="h-5 w-5 text-blue-600" />
+        <h2 id="comments-heading" className="text-2xl font-semibold tracking-[-0.025em] text-gray-950">
+          댓글 <span className="text-blue-600">{comments.length}</span>
+        </h2>
+      </div>
 
-        {/* 댓글 목록 */}
-        <div className="space-y-4">
-          {comments.map((comment) => (
-            <Card key={comment.id}>
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="font-medium">{comment.author_name}</span>
-                      {comment.is_admin && (
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                          관리자
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-gray-700">{comment.content}</p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      {new Date(comment.created_at).toLocaleDateString("ko-KR")}
-                    </p>
-                  </div>
-                  {comment.device_id === deviceId && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(comment.id.toString())}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      <form onSubmit={handleSubmit} className="border-b border-gray-200 pb-10">
+        <label className="mb-5 block max-w-xs">
+          <span className="mb-2 block text-sm font-medium text-gray-700">이름</span>
+          <Input
+            value={authorName}
+            onChange={(event) => setAuthorName(event.target.value)}
+            placeholder="이름을 입력하세요"
+            className="h-11 rounded-none border-x-0 border-t-0 px-0 shadow-none focus-visible:border-blue-600 focus-visible:ring-0"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-medium text-gray-700">댓글</span>
+          <Textarea
+            value={newComment}
+            onChange={(event) => setNewComment(event.target.value)}
+            placeholder="댓글을 입력하세요"
+            rows={4}
+            className="resize-none rounded-none border-gray-200 p-4 shadow-none focus-visible:border-blue-600 focus-visible:ring-1 focus-visible:ring-blue-600"
+          />
+        </label>
+        <div className="mt-4 flex justify-end">
+          <Button type="submit" className="bg-blue-600 px-5 hover:bg-blue-700">댓글 작성</Button>
         </div>
-      </CardContent>
-    </Card>
+      </form>
+
+      <div className="divide-y divide-gray-200">
+        {comments.map((comment) => (
+          <article key={comment.id} className="py-7">
+            <div className="flex items-start justify-between">
+              <div className="min-w-0 pr-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="font-semibold text-gray-950">{comment.author_name}</span>
+                  {comment.is_admin && <span className="text-xs font-medium text-blue-600">관리자</span>}
+                </div>
+                <p className="whitespace-pre-wrap leading-7 text-gray-700">{comment.content}</p>
+                <p className="mt-3 text-xs text-gray-400">{new Date(comment.created_at).toLocaleDateString("ko-KR")}</p>
+              </div>
+              {comment.device_id === deviceId && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label="댓글 삭제"
+                  onClick={() => handleDelete(comment.id.toString())}
+                  className="text-gray-300 hover:bg-red-50 hover:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </article>
+        ))}
+        {comments.length === 0 && <p className="py-10 text-sm text-gray-400">첫 번째 댓글을 남겨보세요.</p>}
+      </div>
+    </section>
   )
 }

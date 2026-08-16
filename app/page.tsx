@@ -6,9 +6,9 @@ import { Header } from "@/components/header"
 import { PostCard } from "@/components/post-card"
 import { CategoryFilter } from "@/components/category-filter"
 import { SearchBar } from "@/components/search-bar"
+import { BlogRightRail } from "@/components/blog-right-rail"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { User, Github } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
 import { Profile } from "@/lib/profile"
@@ -23,6 +23,7 @@ export default function HomePage() {
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({});
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [popularPosts, setPopularPosts] = useState<any[]>([]);
   const [sortBy, setSortBy] = useState<"latest" | "popular">("latest");
 
   useEffect(() => {
@@ -31,6 +32,9 @@ export default function HomePage() {
         const sortParam = sortBy === "popular" ? "likes" : "created_at";
         const postsData = await apiClient.getPosts({ category, search, page, limit: 10, sortBy: sortParam }).catch(() => ({ posts: [], pagination: null }));
         setPosts(postsData as any);
+
+        const popularData = await apiClient.getPosts({ page: 1, limit: 4, sortBy: "likes" }).catch(() => ({ posts: [] }));
+        setPopularPosts(Array.isArray((popularData as any).posts) ? (popularData as any).posts : []);
         
         const categoriesData = await apiClient.getCategories().catch(() => []);
         setCategories((categoriesData as any[]).map((cat) => ({
@@ -57,85 +61,53 @@ export default function HomePage() {
   }, [category, search, page, sortBy]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header />
 
-      {/* Hero Section */}
-      <section className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 py-16">
+      <section className="border-b border-gray-200 bg-white">
+        <div className="mx-auto max-w-[1480px] px-5 py-12 lg:px-8 lg:py-14">
           <div className="text-center">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">개발자 블로그</h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              {profile?.bio || ""}
-            </p>
-            <div className="flex items-center justify-center gap-4 text-sm text-gray-500">
-              <div className="flex items-center gap-1">
-                <User className="w-4 h-4" />
-                <span>{profile?.name || "DDONG's"}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Github className="w-4 h-4" />
-                <span>@{profile?.github_username || "developer"}</span>
-              </div>
+            <h1 className="mb-3 text-4xl font-semibold tracking-[-0.04em] text-gray-950">개발자 블로그</h1>
+            <p className="mx-auto mb-6 max-w-2xl text-lg text-gray-500">{profile?.bio || "개발하며 배우고 경험한 내용을 기록합니다."}</p>
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-gray-500">
+              <span className="flex items-center gap-1.5"><User className="h-4 w-4 text-blue-600" />{profile?.name || "DDONG's"}</span>
+              <span className="flex items-center gap-1.5"><Github className="h-4 w-4 text-blue-600" />@{profile?.github_username || "developer"}</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="mx-auto max-w-[1480px] px-5 py-10 lg:px-8 lg:py-12">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[210px_minmax(0,1fr)] xl:grid-cols-[210px_minmax(0,860px)_210px] xl:justify-between xl:gap-12">
           {/* Sidebar */}
-          <aside className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
+          <aside>
+            <div className="sticky top-24 space-y-10">
               <SearchBar />
               <CategoryFilter categories={categories} />
-
-              {/* Stats Card */}
-              <Card>
-                <CardContent className="p-6">
-                  <h3 className="font-semibold mb-4">블로그 통계</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">총 게시글</span>
-                      <span className="font-medium">{stats?.totalPosts}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">총 좋아요</span>
-                      <span className="font-medium">{stats?.totalLikes}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">총 댓글</span>
-                      <span className="font-medium">{stats?.totalComments}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">총 방문자</span>
-                      <span className="font-medium">{stats?.totalVisitors || 0}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </aside>
 
           {/* Posts Grid */}
-          <main className="lg:col-span-3">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
+          <main id="posts" className="min-w-0 scroll-mt-24">
+            <div className="mb-7 flex items-center justify-between border-b border-gray-200 pb-5">
+              <h2 className="text-2xl font-semibold tracking-[-0.025em] text-gray-950">
                 {category && category !== "All" ? `${category} 게시글` : "최근 게시글"}
                 {search && ` - "${search}" 검색 결과`}
               </h2>
               <div className="flex items-center gap-2">
-                <Button 
-                  variant={sortBy === "latest" ? "default" : "outline"} 
+                <Button
+                  variant={sortBy === "latest" ? "default" : "outline"}
                   size="sm"
+                  className={sortBy === "latest" ? "bg-blue-600 hover:bg-blue-700" : ""}
                   onClick={() => setSortBy("latest")}
                 >
                   최신순
                 </Button>
-                <Button 
-                  variant={sortBy === "popular" ? "default" : "outline"} 
+                <Button
+                  variant={sortBy === "popular" ? "default" : "outline"}
                   size="sm"
+                  className={sortBy === "popular" ? "bg-blue-600 hover:bg-blue-700" : ""}
                   onClick={() => setSortBy("popular")}
                 >
                   인기순
@@ -145,7 +117,7 @@ export default function HomePage() {
 
             {Array.isArray(posts.posts) && posts.posts.length > 0 ? (
               <>
-                <div className="grid gap-6">
+                <div className="grid gap-7">
                   {posts.posts.map((post: any) => (
                     <PostCard key={post.id} post={post} />
                   ))}
@@ -187,6 +159,12 @@ export default function HomePage() {
               </div>
             )}
           </main>
+
+          <aside className="hidden xl:block">
+            <div className="sticky top-24">
+              <BlogRightRail popularPosts={popularPosts} stats={stats} />
+            </div>
+          </aside>
         </div>
       </div>
     </div>
