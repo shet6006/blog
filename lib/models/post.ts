@@ -7,6 +7,7 @@ export interface Post {
   category_name?: string
   slug: string
   github_commit_url?: string | null
+  thumbnail_url?: string | null
   is_public: boolean
   author_id: string
   likes_count: number

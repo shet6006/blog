@@ -1,10 +1,13 @@
+@import "pretendard/dist/web/variable/pretendardvariable.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
-  background: #f8fafc;
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: #ffffff;
+  letter-spacing: -0.012em;
 }
 
 html {
@@ -21,6 +24,7 @@ html {
 .article-body :where(h2, h3) {
   scroll-margin-top: 6rem;
   color: #0f172a;
+  font-weight: 600;
   letter-spacing: -0.025em;
 }
 

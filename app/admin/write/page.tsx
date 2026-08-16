@@ -14,6 +14,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { getApiBaseUrl } from "@/lib/api-client"
 import { MarkdownEditor } from "@/components/markdown-editor"
+import { getPostImageCount, getPostImageUrls, MAX_POST_IMAGES, resolvePostThumbnail } from "@/lib/post-images"
 
 interface Category {
   id: number
@@ -31,6 +32,7 @@ export default function WritePage() {
     category_id: "",
     is_public: true,
     slug: "",
+    thumbnail_url: "",
   })
 
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -41,6 +43,36 @@ export default function WritePage() {
   useEffect(() => {
     checkAuthAndLoadData()
   }, [])
+
+  const validatePost = () => {
+    if (!post.title.trim()) {
+      toast.error("제목을 입력해주세요.")
+      return false
+    }
+    if (!post.content.trim()) {
+      toast.error("내용을 입력해주세요.")
+      return false
+    }
+    if (!post.category_id) {
+      toast.error("카테고리를 선택해주세요.")
+      return false
+    }
+    if (getPostImageCount(post.content) > MAX_POST_IMAGES) {
+      toast.error(`게시글에는 이미지를 최대 ${MAX_POST_IMAGES}장까지 넣을 수 있습니다.`)
+      return false
+    }
+    return true
+  }
+
+  const readResponse = async (response: Response) => {
+    const text = await response.text()
+    if (!text) return {}
+    try {
+      return JSON.parse(text)
+    } catch {
+      return { error: text }
+    }
+  }
 
   const checkAuthAndLoadData = async () => {
     try {
@@ -80,6 +112,7 @@ export default function WritePage() {
   }
 
   const handleSave = async () => {
+    if (!validatePost()) return
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
@@ -95,7 +128,7 @@ export default function WritePage() {
         }),
       })
 
-      const data = await response.json()
+      const data = await readResponse(response)
 
       if (response.ok) {
         toast.success("게시글이 임시저장되었습니다.")
@@ -110,6 +143,7 @@ export default function WritePage() {
   }
 
   const handlePublish = async () => {
+    if (!validatePost()) return
     try {
       const response = await fetch(`${getApiBaseUrl()}/api/admin/posts`, {
         method: "POST",
@@ -125,14 +159,15 @@ export default function WritePage() {
         }),
       })
 
-      const data = await response.json()
+      const data = await readResponse(response)
 
       if (response.ok) {
         toast.success("게시글이 발행되었습니다.")
         router.push("/admin/dashboard")
       } else {
-        console.error("게시글 발행 실패:", data)
-        toast.error(data.error || "게시글 발행에 실패했습니다.")
+        const message = data.error || data.message || `게시글 발행에 실패했습니다. (HTTP ${response.status})`
+        console.warn("게시글 발행 실패:", response.status, message)
+        toast.error(message)
       }
     } catch (error) {
       console.error("게시글 발행 중 오류:", error)
@@ -182,31 +217,30 @@ export default function WritePage() {
     fileInputRef.current?.click()
   }
 
-  const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ""
-    if (!file) return
-
+  const uploadImages = async (files: File[]) => {
+    if (files.length === 0) return
+    const currentCount = getPostImageCount(post.content)
+    if (currentCount + files.length > MAX_POST_IMAGES) {
+      toast.error(`게시글에는 이미지를 최대 ${MAX_POST_IMAGES}장까지 넣을 수 있습니다. (현재 ${currentCount}장)`)
+      return
+    }
     try {
       setIsUploadingImage(true)
-      const formData = new FormData()
-      formData.append("file", file)
-
-      const response = await fetch(`${getApiBaseUrl()}/api/uploads/image`, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.url) {
-        throw new Error(data.error || "이미지 업로드에 실패했습니다.")
+      const urls: string[] = []
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append("file", file)
+        const response = await fetch(`${getApiBaseUrl()}/api/uploads/image`, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        })
+        const data = await response.json()
+        if (!response.ok || !data.url) throw new Error(data.error || "이미지 업로드에 실패했습니다.")
+        urls.push(`${getApiBaseUrl()}${data.url}`)
       }
-
-      const imageUrl = `${getApiBaseUrl()}${data.url}`
-      const snippet = `\n\n![이미지 설명](${imageUrl})\n\n`
-      insertAtCursor(snippet)
+      insertAtCursor(`\n\n${urls.map((url) => `![이미지 설명](${url})`).join("\n\n")}\n\n`)
+      toast.success(`${urls.length}장의 이미지를 추가했습니다.`)
     } catch (error: any) {
       console.error("이미지 업로드 실패:", error)
       toast.error(error.message || "이미지 업로드에 실패했습니다.")
@@ -214,6 +248,15 @@ export default function WritePage() {
       setIsUploadingImage(false)
     }
   }
+
+  const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ""
+    await uploadImages(files)
+  }
+
+  const imageUrls = getPostImageUrls(post.content)
+  const thumbnailPreview = resolvePostThumbnail(post.content, post.thumbnail_url)
 
   if (isLoading) {
     return <div className="flex justify-center items-center min-h-screen">로딩 중...</div>
@@ -283,6 +326,7 @@ export default function WritePage() {
                         ref={fileInputRef}
                         type="file"
                         accept="image/*"
+                        multiple
                         className="hidden"
                         onChange={handleImageSelected}
                       />
@@ -302,6 +346,8 @@ export default function WritePage() {
                     value={post.content}
                     onChange={(content) => setPost({ ...post, content })}
                     textareaRef={textareaRef}
+                    onPasteImages={uploadImages}
+                    isUploadingImage={isUploadingImage}
                   />
                 </div>
               </CardContent>
@@ -339,6 +385,23 @@ export default function WritePage() {
                     checked={post.is_public}
                     onCheckedChange={(checked) => setPost({ ...post, is_public: checked })}
                   />
+                </div>
+
+                <div className="space-y-3 border-t pt-4">
+                  <div>
+                    <Label htmlFor="thumbnail">썸네일</Label>
+                    <p className="mt-1 text-xs leading-5 text-gray-500">기본값은 본문의 첫 이미지입니다. 다른 이미지를 고르거나 사용하지 않을 수 있습니다.</p>
+                  </div>
+                  <Select value={post.thumbnail_url || "auto"} onValueChange={(value) => setPost({ ...post, thumbnail_url: value === "auto" ? "" : value })}>
+                    <SelectTrigger id="thumbnail"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">첫 이미지 자동 사용</SelectItem>
+                      <SelectItem value="none">썸네일 사용 안 함</SelectItem>
+                      {imageUrls.map((url, index) => <SelectItem key={`${url}-${index}`} value={url}>이미지 {index + 1}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  {thumbnailPreview && <img src={thumbnailPreview} alt="선택한 썸네일 미리보기" className="aspect-video w-full border border-gray-200 object-cover" />}
+                  <p className="text-xs text-gray-500">본문 이미지 {imageUrls.length}/{MAX_POST_IMAGES}장</p>
                 </div>
               </CardContent>
             </Card>

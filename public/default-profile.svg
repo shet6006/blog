@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title description">
+  <title id="title">기본 프로필 이미지</title>
+  <desc id="description">흰색 배경의 사용자 실루엣</desc>
+  <circle cx="64" cy="64" r="63" fill="#fff" stroke="#e5e7eb" stroke-width="2"/>
+  <circle cx="64" cy="48" r="22" fill="#cbd5e1"/>
+  <path fill="#cbd5e1" d="M24 112c2.8-24.4 18.2-38 40-38s37.2 13.6 40 38H24Z"/>
+</svg>

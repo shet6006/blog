@@ -23,12 +23,12 @@ export function TableOfContents({ headings }: { headings: ArticleHeading[] }) {
   if (headings.length === 0) return null
 
   return (
-    <nav aria-label="글 목차" className="rounded-xl border border-slate-200 bg-white/80 p-5 backdrop-blur">
-      <p className="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">On this page</p>
-      <ol className="space-y-1">
+    <nav aria-label="글 목차">
+      <p className="mb-3 text-sm font-semibold tracking-tight text-slate-950">목차</p>
+      <ol className="border-t border-slate-200">
         {headings.map((heading) => (
           <li key={heading.id}>
-            <a href={`#${heading.id}`} className={cn("block border-l-2 py-1.5 text-sm leading-5 transition-colors", heading.level === 3 ? "pl-6" : "pl-3", activeId === heading.id ? "border-blue-600 font-semibold text-blue-700" : "border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-900")}>
+            <a href={`#${heading.id}`} className={cn("block border-b border-slate-100 py-3 text-sm leading-5 transition-colors", heading.level === 3 ? "pl-4" : "pl-0", activeId === heading.id ? "font-semibold text-blue-600" : "text-slate-500 hover:text-slate-900")}>
               {heading.text}
             </a>
           </li>
