@@ -5,7 +5,6 @@ import { getApiBaseUrl } from "@/lib/api-client"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
@@ -14,9 +13,9 @@ import { Header } from "@/components/header"
 import { CategoryFilter } from "@/components/category-filter"
 import { Card, CardContent } from "@/components/ui/card"
 import { SearchBar } from "@/components/search-bar"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
+import { MarkdownEditor } from "@/components/markdown-editor"
 import { postViewHref } from "@/lib/post-routes"
+import { normalizePostBody } from "@/lib/post-content"
 
 export default function EditPostPage() {
   const searchParams = useSearchParams()
@@ -45,13 +44,7 @@ export default function EditPostPage() {
         if (!postRes.ok) throw new Error()
         const postData = await postRes.json()
         
-        // content에서 첫 번째 H1 제목 추출
-        const h1Match = postData.content?.match(/^#\s+(.+?)(?:\n|$)/m)
-        if (h1Match) {
-          // H1 제목이 있으면 제목 필드에 설정하고 content에서 제거
-          postData.title = h1Match[1].trim()
-          postData.content = postData.content.replace(/^#\s+.*?\n\n?/m, '').trim()
-        }
+        postData.content = normalizePostBody(postData.content, postData.title)
         
         setPost(postData)
         const statsRes = await fetch(`${getApiBaseUrl()}/api/stats`)
@@ -142,18 +135,13 @@ export default function EditPostPage() {
         .replace(/-+/g, "-")
         .replace(/^-|-$/g, "")
       
-      // 제목을 H1 태그로 변환하여 content 앞에 추가
-      const contentWithTitle = post.content.trim().startsWith('#') 
-        ? post.content 
-        : `# ${post.title}\n\n${post.content}`
-      
       const res = await fetch(`${getApiBaseUrl()}/api/posts/${slug}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           title: post.title,
-          content: contentWithTitle,
+          content: post.content,
           category_id: post.category_id,
           is_public: post.is_public ? 1 : 0, // MySQL용 변환
           slug: newSlug,
@@ -207,7 +195,7 @@ export default function EditPostPage() {
             <h1 className="text-2xl font-bold mb-6">게시글 수정</h1>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title">제목 (H1 태그로 저장됩니다)</Label>
+                <Label htmlFor="title">제목</Label>
                 <Input
                   id="title"
                   value={post.title || ""}
@@ -215,7 +203,7 @@ export default function EditPostPage() {
                   placeholder="게시글 제목"
                   required
                 />
-                <p className="text-sm text-gray-500">제목은 자동으로 H1 태그(# 제목)로 저장됩니다.</p>
+                <p className="text-sm text-gray-500">제목과 본문은 따로 저장되므로 본문의 # 문자는 그대로 유지됩니다.</p>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -239,26 +227,12 @@ export default function EditPostPage() {
                     </Button>
                   </div>
                 </div>
-                <div className="border rounded-lg overflow-hidden" style={{ minHeight: "600px" }}>
-                  <div className="grid grid-cols-2 h-[600px]">
-                    <div className="border-r">
-                      <Textarea
-                        id="content"
-                        placeholder="마크다운으로 게시글을 작성하세요..."
-                        value={post.content}
-                        onChange={e => setPost({ ...post, content: e.target.value })}
-                        ref={textareaRef}
-                        className="h-full font-mono border-0 rounded-none resize-none"
-                        required
-                      />
-                    </div>
-                    <div className="overflow-auto p-6 prose prose-lg max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {post.content || "*내용을 입력하세요...*"}
-                      </ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
+                <MarkdownEditor
+                  value={post.content}
+                  onChange={(content) => setPost({ ...post, content })}
+                  textareaRef={textareaRef}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">카테고리</Label>
