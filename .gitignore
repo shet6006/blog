@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -26,9 +27,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# markdown files
-*.md
-Dockerfile
-
 # AWS keys
 *.pem
+*.key
+.keys/
+
+# database, uploads, and operational backups
+*.sql
+*.sql.gz
+*.tar.gz
+migration-backup/
+runtime.env
+images.env

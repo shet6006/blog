@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Edit, Trash2, Eye, EyeOff, Search } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { postEditHref, postViewHref } from "@/lib/post-routes"
 import { getApiBaseUrl } from "@/lib/api-client"
 
 interface Post {
@@ -190,7 +191,7 @@ export default function PostsManagementPage() {
                       filteredPosts.map((post) => (
                         <TableRow key={post.id}>
                           <TableCell className="font-medium">
-                            <Link href={`/posts/${post.slug}`} className="hover:text-blue-600">
+                            <Link href={postViewHref(post.slug)} className="hover:text-blue-600">
                               {post.title}
                             </Link>
                           </TableCell>
@@ -214,7 +215,7 @@ export default function PostsManagementPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem asChild>
-                                  <Link href={`/posts/${post.slug}/edit`}>
+                                  <Link href={postEditHref(post.slug)}>
                                     <Edit className="w-4 h-4 mr-2" />
                                     수정
                                   </Link>

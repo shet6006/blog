@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   title: "DDONG's",
   description: '',
   generator: 'Next.js',
-  charset: 'utf-8',
   icons: {
     icon: '/icon.svg',  // app/icon.svg 파일 사용
   },
