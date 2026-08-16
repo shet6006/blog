@@ -1,11 +1,21 @@
 "use client"
 
-import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-const apiEndpoints = {
+interface ApiEndpoint {
+  method: string
+  path: string
+  summary: string
+  description: string
+  auth?: boolean
+  params?: Record<string, string>
+  requestBody?: Record<string, string>
+  responses: Record<number, string>
+}
+
+const apiEndpoints: Record<string, ApiEndpoint[]> = {
   Auth: [
     {
       method: "POST",
@@ -289,4 +299,3 @@ export default function ApiDocsPage() {
     </div>
   )
 }
-

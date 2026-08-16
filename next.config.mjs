@@ -5,9 +5,6 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
   images: {
     unoptimized: true,
     // 외부 이미지 도메인 허용 (필요한 경우)

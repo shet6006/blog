@@ -49,7 +49,7 @@ export function CommentSection({ postSlug }: CommentSectionProps) {
   const loadComments = async () => {
     try {
       const data = await apiClient.getComments(postSlug)
-      setComments(data)
+      setComments(data as Comment[])
     } catch (error) {
       console.error("댓글 로딩 중 오류:", error)
       toast.error("댓글을 불러오는데 실패했습니다.")

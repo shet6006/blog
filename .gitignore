@@ -29,3 +29,13 @@ next-env.d.ts
 
 # AWS keys
 *.pem
+*.key
+.keys/
+
+# database, uploads, and operational backups
+*.sql
+*.sql.gz
+*.tar.gz
+migration-backup/
+runtime.env
+images.env

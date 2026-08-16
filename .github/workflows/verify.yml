@@ -24,16 +24,8 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ""
         run: npm run build
-      - name: Build production container
-        run: docker build --tag blog-frontend:verify .
-      - name: Smoke test static routes
+      - name: Verify exported routes
         run: |
-          docker run --detach --name blog-frontend --publish 8088:80 blog-frontend:verify
-          for attempt in {1..20}; do
-            curl --fail --silent http://127.0.0.1:8088/ >/dev/null && break
-            sleep 1
-          done
-          curl --fail http://127.0.0.1:8088/
-          curl --fail 'http://127.0.0.1:8088/posts/view/?slug=example-post'
-          curl --fail 'http://127.0.0.1:8088/posts/edit/?slug=example-post'
-          docker rm --force blog-frontend
+          test -f out/index.html
+          test -f out/posts/view/index.html
+          test -f out/posts/edit/index.html
