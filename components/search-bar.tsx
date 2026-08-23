@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
 
-export function SearchBar() {
+interface SearchBarProps {
+  onNavigateStart?: () => void
+}
+
+export function SearchBar({ onNavigateStart }: SearchBarProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "")
@@ -21,6 +25,8 @@ export function SearchBar() {
     e.preventDefault()
     const params = new URLSearchParams(searchParams.toString())
     const query = searchQuery.trim()
+    if (query === (searchParams.get("search") || "")) return
+    onNavigateStart?.()
     if (query) params.set("search", query)
     else params.delete("search")
     params.set("page", "1")

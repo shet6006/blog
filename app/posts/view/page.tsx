@@ -1,9 +1,10 @@
 import { Suspense } from "react"
+import { PageSkeleton } from "@/components/page-skeleton"
 import PostPage from "./post-page-client"
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>로딩 중...</div>}>
+    <Suspense fallback={<PageSkeleton />}>
       <PostPage />
     </Suspense>
   )

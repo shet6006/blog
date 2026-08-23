@@ -14,6 +14,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { getApiBaseUrl } from "@/lib/api-client"
 import { MarkdownEditor } from "@/components/markdown-editor"
+import { FormSkeleton } from "@/components/page-skeleton"
 import { getPostImageCount, getPostImageUrls, MAX_POST_IMAGES, resolvePostThumbnail } from "@/lib/post-images"
 
 interface Category {
@@ -259,7 +260,7 @@ export default function WritePage() {
   const thumbnailPreview = resolvePostThumbnail(post.content, post.thumbnail_url)
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">로딩 중...</div>
+    return <FormSkeleton />
   }
 
   return (

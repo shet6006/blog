@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 interface PostPaginationProps {
   currentPage: number
   totalPages: number
+  onNavigateStart?: () => void
 }
 
 function visiblePages(currentPage: number, totalPages: number) {
@@ -14,7 +15,7 @@ function visiblePages(currentPage: number, totalPages: number) {
   return Array.from({ length: count }, (_, index) => start + index)
 }
 
-export function PostPagination({ currentPage, totalPages }: PostPaginationProps) {
+export function PostPagination({ currentPage, totalPages, onNavigateStart }: PostPaginationProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -24,6 +25,7 @@ export function PostPagination({ currentPage, totalPages }: PostPaginationProps)
   const goToPage = (page: number) => {
     const nextPage = Math.max(1, Math.min(page, totalPages))
     if (nextPage === currentPage) return
+    onNavigateStart?.()
     const params = new URLSearchParams(searchParams.toString())
     if (nextPage === 1) params.delete("page")
     else params.set("page", String(nextPage))

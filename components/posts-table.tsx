@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { getApiBaseUrl } from "@/lib/api-client"
 import Link from "next/link"
+import { Skeleton } from "@/components/ui/skeleton"
 import { postEditHref, postViewHref } from "@/lib/post-routes"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -87,7 +88,12 @@ export function PostsTable() {
   }
 
   if (isLoading) {
-    return <div className="text-center py-4">로딩 중...</div>
+    return (
+      <div className="animate-pulse space-y-3 py-4" aria-hidden="true">
+        <div className="grid grid-cols-6 gap-4 border-b border-slate-200 pb-3">{Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-4 w-full" />)}</div>
+        {Array.from({ length: 5 }).map((_, row) => <div key={row} className="grid grid-cols-6 gap-4 py-3">{Array.from({ length: 6 }).map((_, column) => <Skeleton key={column} className="h-4 w-full" />)}</div>)}
+      </div>
+    )
   }
 
   return (

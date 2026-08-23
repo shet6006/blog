@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { Header } from "@/components/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MarkdownEditor } from "@/components/markdown-editor"
+import { FormSkeleton } from "@/components/page-skeleton"
 import { postViewHref } from "@/lib/post-routes"
 import { normalizePostBody } from "@/lib/post-content"
 import { getPostImageCount, getPostImageUrls, MAX_POST_IMAGES, resolvePostThumbnail } from "@/lib/post-images"
@@ -159,7 +160,7 @@ export default function EditPostPage() {
     }
   }
 
-  if (isLoading) return <div className="flex min-h-screen items-center justify-center">로딩 중...</div>
+  if (isLoading) return <FormSkeleton />
   if (!post) return <div className="flex min-h-screen items-center justify-center">게시글을 찾을 수 없습니다.</div>
 
   const imageUrls = getPostImageUrls(post.content || "")

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Header } from "@/components/header"
+import { PageSkeleton } from "@/components/page-skeleton"
 import { AdminSidebar } from "@/components/admin-sidebar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -135,7 +136,7 @@ export default function PostsManagementPage() {
   )
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">로딩 중...</div>
+    return <PageSkeleton />
   }
 
   return (

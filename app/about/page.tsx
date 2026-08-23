@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react"
 import { Header } from "@/components/header"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit, Save, X } from "lucide-react"
+import { Edit, Github, Save, X } from "lucide-react"
 import { toast } from "sonner"
 import { apiClient, getApiBaseUrl } from "@/lib/api-client"
 import ReactMarkdown from "react-markdown"
@@ -13,6 +14,7 @@ import remarkGfm from "remark-gfm"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { Profile } from "@/lib/profile"
 
 interface AboutPage {
   id: number
@@ -27,6 +29,7 @@ export default function AboutPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const [editData, setEditData] = useState({
     title: "",
     content: "",
@@ -36,8 +39,18 @@ export default function AboutPage() {
 
   useEffect(() => {
     loadAbout()
+    loadProfile()
     checkAdmin()
   }, [])
+
+  const loadProfile = async () => {
+    try {
+      const data = await apiClient.getAdminProfile() as { profile?: Profile }
+      setProfile(data.profile || null)
+    } catch (error) {
+      console.error("Failed to load profile:", error)
+    }
+  }
 
   const checkAdmin = async () => {
     try {
@@ -128,8 +141,12 @@ export default function AboutPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center">로딩 중...</div>
+        <div className="mx-auto max-w-4xl animate-pulse space-y-8 px-4 py-10" aria-hidden="true">
+          <div className="grid gap-8 border border-slate-200 bg-white p-7 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center sm:p-10">
+            <Skeleton className="mx-auto h-40 w-40 rounded-full sm:mx-0" />
+            <div className="space-y-4"><Skeleton className="h-4 w-20" /><Skeleton className="h-10 w-40" /><Skeleton className="h-5 w-4/5" /><Skeleton className="h-9 w-32" /></div>
+          </div>
+          <Skeleton className="h-80 w-full" />
         </div>
       </div>
     )
@@ -138,7 +155,29 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl space-y-8 px-4 py-10">
+        <section className="overflow-hidden border border-slate-200 bg-white shadow-sm">
+          <div className="grid gap-8 p-7 sm:grid-cols-[160px_minmax(0,1fr)] sm:items-center sm:p-10">
+            <img
+              src={profile?.avatar_url || "/default-profile.svg"}
+              alt={`${profile?.name || "관리자"} 프로필`}
+              className="mx-auto h-40 w-40 rounded-full border border-slate-200 bg-white object-cover shadow-sm sm:mx-0"
+            />
+            <div className="text-center sm:text-left">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.12em] text-blue-600">Profile</p>
+              <h1 className="text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">{profile?.name || "DDONG's"}</h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">{profile?.bio || "개발하며 배우고 경험한 내용을 기록합니다."}</p>
+              {profile?.github_username && (
+                <Button asChild variant="outline" className="mt-6 rounded-full">
+                  <a href={`https://github.com/${profile.github_username.replace(/^@/, "")}`} target="_blank" rel="noreferrer">
+                    <Github className="mr-2 h-4 w-4" />
+                    GitHub
+                  </a>
+                </Button>
+              )}
+            </div>
+          </div>
+        </section>
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -240,4 +279,3 @@ export default function AboutPage() {
     </div>
   )
 }
-

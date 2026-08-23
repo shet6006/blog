@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { MessageCircle, Trash2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { toast } from "sonner"
 import { apiClient, getApiBaseUrl } from "@/lib/api-client"
 
@@ -89,7 +90,12 @@ export function CommentSection({ postSlug }: { postSlug: string }) {
     }
   }
 
-  if (isLoading) return <div className="py-8 text-sm text-gray-400">댓글을 불러오는 중...</div>
+  if (isLoading) return (
+    <div className="animate-pulse space-y-6 py-8" aria-hidden="true">
+      <Skeleton className="h-7 w-24" /><Skeleton className="h-11 w-full" /><Skeleton className="h-28 w-full" />
+      <div className="space-y-3 border-t border-slate-200 pt-6"><Skeleton className="h-4 w-28" /><Skeleton className="h-4 w-4/5" /></div>
+    </div>
+  )
 
   return (
     <section aria-labelledby="comments-heading">

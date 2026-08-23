@@ -42,11 +42,11 @@ export function Header() {
           cookies: document.cookie,
         })
       }
-      
+
       const response = await fetch(`${getApiBaseUrl()}/api/auth/check`, {
         credentials: "include", // 쿠키 자동 전송
       })
-      
+
       if (process.env.NODE_ENV === "development") {
         console.log("📡 [Header] 응답:", {
           status: response.status,
@@ -54,15 +54,15 @@ export function Header() {
           ok: response.ok,
         })
       }
-      
+
       if (response.ok) {
         const data = await response.json()
-        
+
         // authenticated 필드로 로그인 상태 확인
         if (data.authenticated && data.user) {
           setIsLoggedIn(true)
           setUser(data.user)
-          
+
           // 프로필 정보 가져오기
           const profileResponse = await fetch(`${getApiBaseUrl()}/api/admin/profile`, {
             credentials: "include",
@@ -131,20 +131,41 @@ export function Header() {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-10 md:flex">
-              <Link href="/" className="text-blue-100 transition-colors hover:text-white">
+            <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-[120px] md:flex">
+              <Link href="/" className="
+  relative text-blue-100 transition-colors
+  after:absolute after:-bottom-1 after:left-0
+  after:h-[2px] after:w-0 after:bg-white
+  after:transition-all after:duration-300
+  hover:text-white hover:after:w-full
+">
                 홈
               </Link>
-              <span aria-hidden="true" className="text-blue-200/60">·</span>
-              <Link href="/categories" className="text-blue-100 transition-colors hover:text-white">
+              <Link href="/categories" className="
+  relative text-blue-100 transition-colors
+  after:absolute after:-bottom-1 after:left-0
+  after:h-[2px] after:w-0 after:bg-white
+  after:transition-all after:duration-300
+  hover:text-white hover:after:w-full
+">
                 카테고리
               </Link>
-              <span aria-hidden="true" className="text-blue-200/60">·</span>
-              <Link href="/portfolio" className="text-blue-100 transition-colors hover:text-white">
+              <Link href="/portfolio" className="
+  relative text-blue-100 transition-colors
+  after:absolute after:-bottom-1 after:left-0
+  after:h-[2px] after:w-0 after:bg-white
+  after:transition-all after:duration-300
+  hover:text-white hover:after:w-full
+">
                 포트폴리오
               </Link>
-              <span aria-hidden="true" className="text-blue-200/60">·</span>
-              <Link href="/about" className="text-blue-100 transition-colors hover:text-white">
+              <Link href="/about" className="
+  relative text-blue-100 transition-colors
+  after:absolute after:-bottom-1 after:left-0
+  after:h-[2px] after:w-0 after:bg-white
+  after:transition-all after:duration-300
+  hover:text-white hover:after:w-full
+">
                 소개
               </Link>
             </nav>

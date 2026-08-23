@@ -12,14 +12,17 @@ interface Category {
 interface CategoryFilterProps {
   categories: Category[]
   basePath?: string
+  onNavigateStart?: () => void
 }
 
-export function CategoryFilter({ categories, basePath = "/" }: CategoryFilterProps) {
+export function CategoryFilter({ categories, basePath = "/", onNavigateStart }: CategoryFilterProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const selectedCategory = searchParams.get("category") || "All"
 
   const handleCategoryClick = (categoryName: string) => {
+    if (categoryName === selectedCategory) return
+    onNavigateStart?.()
     const params = new URLSearchParams(searchParams.toString())
     if (categoryName === "All") {
       params.delete("category")
