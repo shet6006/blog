@@ -7,7 +7,8 @@ import { resolvePostThumbnail } from "@/lib/post-images"
 interface Post {
   id: number
   title: string
-  content: string
+  content?: string
+  excerpt?: string
   category_name?: string
   slug: string
   created_at: string
@@ -21,9 +22,10 @@ interface PostCardProps {
 }
 
 export function PostCard({ post }: PostCardProps) {
-  const thumbnailUrl = resolvePostThumbnail(post.content, post.thumbnail_url)
+  const content = post.content || ""
+  const thumbnailUrl = resolvePostThumbnail(content, post.thumbnail_url)
   // 마크다운에서 첫 번째 H1 제목 제거 (제목은 이미 카드에 표시됨)
-  const contentWithoutTitle = post.content
+  const contentWithoutTitle = content
     .replace(/^#\s+.*?\n\n?/m, '') // 첫 번째 H1 제목 제거
     .replace(/```[\s\S]*?```/g, " 코드 예제 ")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
@@ -71,7 +73,7 @@ export function PostCard({ post }: PostCardProps) {
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}>
-            {contentWithoutTitle || "내용이 없습니다."}
+            {post.excerpt || contentWithoutTitle || "내용이 없습니다."}
           </p>
 
           <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-6">
